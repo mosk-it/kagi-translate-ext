@@ -70,14 +70,14 @@
     #translateButton:hover {
       opacity: 0.9;
     }
-    #result {
+    .textarea {
       border: 1px solid var(--border-color);
       border-radius: 3px;
       padding: 8px;
       min-height: 50px;
       max-height: 120px;
       overflow-y: auto;
-      font-size: 13px;
+      font-size: 12px;
     }
   </style>
 </head>
@@ -86,7 +86,7 @@
 
   <div class="container">
     <small class="options-link"><a href="options.html" target="_blank">options</a></small>
-    <textarea id="translateText" placeholder="Enter text to translate"></textarea>
+    <textarea class="textarea" id="translateText" placeholder="Enter text to translate"></textarea>
     <div class="lang-select select-items">
       <select id="fromLang" class="select-selected">
       </select>
@@ -94,7 +94,7 @@
       </select>
     </div>
     <button id="translateButton">Translate</button>
-    <div id="result"></div>
+    <div class="textarea" id="result"></div>
   </div>
   <script src="popup.js"></script>
 </body>
