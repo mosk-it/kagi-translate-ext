@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Kagi Translate Extension",
+  "version": "0.1.0",
+  "description": "Translate text using Kagi Translate",
+  "applications": {
+    "gecko": {
+      "id": "your-extension-id@example.com"
+    }
+  },
+  "icons": {
+    "48": "icon.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "https://translate.kagi.com/*"
+  ],
+  "action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "translate-selected-text": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Comma"
+      },
+      "description": "Translate selected text"
+    },
+    "open-translate-window": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Period"
+      },
+      "description": "Open translation window"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
