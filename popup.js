@@ -1,9 +1,31 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const translateText = document.getElementById('translateText');
   const fromLang = document.getElementById('fromLang');
   const toLang = document.getElementById('toLang');
   const translateButton = document.getElementById('translateButton');
   const resultDiv = document.getElementById('result');
+
+  const storedData = await browser.storage.local.get('translatedSelectedText');
+  if (storedData.translatedSelectedText) {
+    translateText.value = storedData.translatedSelectedText;
+    translateText.focus();
+    // Clear the stored text
+    await browser.storage.local.remove('translatedSelectedText');
+  } else {
+
+    try {
+      const response = await browser.runtime.sendMessage({
+        action: 'translateSelectedText'
+      });
+
+      if (response && response.selectedText) {
+        translateText.value = response.selectedText;
+        translateText.focus();
+      }
+    } catch (error) {
+      console.error('Error getting selected text:', error);
+    }
+  }
 
   browser.storage.sync.get(['fromLang', 'toLang']).then(result => {
     if (result.fromLang) fromLang.value = result.fromLang;
@@ -18,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     browser.storage.sync.set({ toLang: toLang.value });
   });
 
-
   function populateLanguageDropdown(selectElement, languages) {
     const optionsContainer = selectElement;
     optionsContainer.innerHTML = '';
@@ -29,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
       option.textContent = lang;
       optionsContainer.appendChild(option);
     });
-
   }
 
   browser.storage.sync.get(['selectedLanguages']).then(result => {
@@ -42,8 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     populateLanguageDropdown(fromLangSelect, sourceLanguages);
     populateLanguageDropdown(toLangSelect, selectedLanguages);
   });
-
-
 
   translateButton.addEventListener('click', async () => {
     const text = translateText.value.trim();
@@ -65,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
           text: text
         })
       });
+
+      if (!response.ok) {
+        throw new Error('Translation request failed');
+      }
 
       const data = await response.json();
       resultDiv.textContent = JSON.parse(data.data)[2] || 'Translation failed';

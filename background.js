@@ -29,30 +29,35 @@ async function translateText(text, fromLang = 'Automatic', toLang = 'English', t
         return null;
     }
 }
-// === on shortcut listeners ===
-browser.commands.onCommand.addListener(async (command) => {
-    return; //TODO
-    if (command === 'translate-selected-text') {
-        
-        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+async function getSelectedText(tab) {
+    console.log('getSelectedText')
+    return new Promise((resolve) => {
         browser.tabs.executeScript(tab.id, {
             code: 'window.getSelection().toString().trim()'
-        }, async (selection) => {
-            if (selection && selection[0]) {
-                const settings = await browser.storage.sync.get(['token', 'fromLang', 'toLang']);
-                const translatedText = await translateText(
-                    selection[0], 
-                    settings.fromLang || 'Automatic', 
-                    settings.toLang || 'English', 
-                    settings.token
-                );
-                console.log(translatedText);
+        }, (selection) => {
+            resolve(selection && selection[0] ? selection[0] : null);
+        });
+    });
+}
 
-            }
-        });
-    } else if (command === 'open-translate-popup') {
-        browser.tabs.create({ 
-            url: KAGI_TRANSLATE_URL 
-        });
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+
+    if (message.action === 'translateSelectedText') {
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        const selectedText = await getSelectedText(tab);
+
+        if (selectedText) {
+            const settings = await browser.storage.sync.get(['token', 'fromLang', 'toLang']);
+            const translatedText = await translateText(
+                selectedText,
+                settings.fromLang || 'Automatic',
+                settings.toLang || 'English',
+                settings.token
+            );
+
+            //sendResponse({ translatedText });
+            return { 'selectedText': selectedText };
+        }
     }
 });
