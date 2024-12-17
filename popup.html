@@ -58,15 +58,16 @@
         margin-left: auto;
     }
 
-    #translateButton {
+
+    .button {
       background-color: var(--accent-color);
       color: white;
       border: none;
       padding: 8px;
-      border-radius: 3px;
       cursor: pointer;
       transition: opacity 0.2s;
     }
+
     #translateButton:hover {
       opacity: 0.9;
     }
@@ -74,8 +75,8 @@
       border: 1px solid var(--border-color);
       border-radius: 3px;
       padding: 8px;
-      min-height: 50px;
-      max-height: 120px;
+      min-height: 80px;
+      max-height: 180px;
       overflow-y: auto;
       font-size: 12px;
     }
@@ -88,12 +89,11 @@
     <small class="options-link"><a href="options.html" target="_blank">options</a></small>
     <textarea class="textarea" id="translateText" placeholder="Enter text to translate"></textarea>
     <div class="lang-select select-items">
-      <select id="fromLang" class="select-selected">
-      </select>
-      <select id="toLang" class="select-selected">
-      </select>
+      <select id="fromLang" class="select-selected"> </select>
+      <button id="reverseLangsButton" class="button"><></button>
+      <select id="toLang" class="select-selected"> </select>
     </div>
-    <button id="translateButton">Translate</button>
+    <button id="translateButton" class="button">Translate</button>
     <div class="textarea" id="result"></div>
   </div>
   <script src="popup.js"></script>

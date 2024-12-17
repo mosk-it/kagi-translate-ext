@@ -3,9 +3,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const fromLang = document.getElementById('fromLang');
   const toLang = document.getElementById('toLang');
   const translateButton = document.getElementById('translateButton');
+  const reverseLangsButton = document.getElementById('reverseLangsButton');
+
   const resultDiv = document.getElementById('result');
 
   const storedData = await browser.storage.local.get('translatedSelectedText');
+
   if (storedData.translatedSelectedText) {
     translateText.value = storedData.translatedSelectedText;
     translateText.focus();
@@ -14,29 +17,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
 
     try {
+
       const response = await browser.runtime.sendMessage({
-        action: 'translateSelectedText'
+        action: 'selectedText'
       });
 
-      if (response && response.selectedText) {
-        translateText.value = response.selectedText;
+      if (response) {
+        translateText.value = response;
         translateText.focus();
       }
+
     } catch (error) {
       console.error('Error getting selected text:', error);
     }
   }
 
-  browser.storage.sync.get(['fromLang', 'toLang']).then(result => {
-    if (result.fromLang) fromLang.value = result.fromLang;
-    if (result.toLang) toLang.value = result.toLang;
-  });
 
   fromLang.addEventListener('change', () => {
+    console.log(fromLang.value);
     browser.storage.sync.set({ fromLang: fromLang.value });
   });
 
   toLang.addEventListener('change', () => {
+    console.log(toLang.value);
     browser.storage.sync.set({ toLang: toLang.value });
   });
 
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  browser.storage.sync.get(['selectedLanguages']).then(result => {
+  browser.storage.sync.get(['selectedLanguages', 'fromLang', 'toLang']).then(result => {
     const selectedLanguages = result.selectedLanguages || [];
 
     const fromLangSelect = document.getElementById('fromLang');
@@ -61,9 +64,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sourceLanguages = [...selectedLanguages];
     populateLanguageDropdown(fromLangSelect, sourceLanguages);
     populateLanguageDropdown(toLangSelect, selectedLanguages);
+
+    if (result.fromLang) fromLangSelect.value = result.fromLang;
+    if (result.toLang) toLangSelect.value = result.toLang;
+
   });
 
+  reverseLangsButton.addEventListener('click', async () => {
+    console.log('reverseLangsButton')
+    const fls = document.getElementById('fromLang');
+    const tls = document.getElementById('toLang');
+    let tmpFlsVal = tls.value
+    tls.value = fls.value
+    fls.value = tmpFlsVal
+
+  })
+
+
   translateButton.addEventListener('click', async () => {
+
     const text = translateText.value.trim();
     if (!text) return;
 
