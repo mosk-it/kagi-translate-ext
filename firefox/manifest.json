@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Kagi Translate Extension",
   "version": "0.1.0",
   "description": "Translate text using Kagi Translate",
@@ -16,12 +16,12 @@
     "storage",
     "https://translate.kagi.com/*"
   ],
-  "action": {
+  "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"]
   },
   "commands": {
     "translate-selected-text": {
