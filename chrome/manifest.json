@@ -3,17 +3,15 @@
   "name": "Kagi Translate Extension",
   "version": "0.1.0",
   "description": "Translate text using Kagi Translate",
-  "applications": {
-    "gecko": {
-      "id": "your-extension-id@example.com"
-    }
-  },
   "icons": {
     "48": "icon.png"
   },
   "permissions": [
     "activeTab",
     "storage",
+    "scripting"
+  ],
+  "host_permissions": [
     "https://translate.kagi.com/*"
   ],
   "action": {
@@ -21,7 +19,7 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+	  "service_worker": "background.js"
   },
   "commands": {
     "translate-selected-text": {

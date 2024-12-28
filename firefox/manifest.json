@@ -14,6 +14,7 @@
   "permissions": [
     "activeTab",
     "storage",
+    "scripting",
     "https://translate.kagi.com/*"
   ],
   "browser_action": {
@@ -21,7 +22,8 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "scripts": ["background.js"]
+    "scripts": [ "background.js" ],
+    "type": "module"
   },
   "commands": {
     "translate-selected-text": {
