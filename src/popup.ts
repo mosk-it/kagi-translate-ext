@@ -135,15 +135,26 @@ class TranslateApp {
 
     const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
+    console.log(token);
+    console.log(settings);
 
     try {
+        await browser.cookies.set({
+            url: 'https://translate.kagi.com',
+            name: 'kagi_session',
+            value: token,
+            domain: '.kagi.com',
+            secure: true
+        });
+
       const response = await fetch('https://translate.kagi.com/?/translate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Kagi-Authorization': token,
+          'Authorization': token,
           'Accept': 'application/json',
         },
+        credentials: 'include',
         body: new URLSearchParams({
           from: this.fromLangEl.value,
           to: this.toLangEl.value,

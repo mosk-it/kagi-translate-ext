@@ -9,7 +9,8 @@
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "cookies"
   ],
   "host_permissions": [
     "https://translate.kagi.com/*"
@@ -17,9 +18,6 @@
   "action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
-  },
-  "background": {
-	  "service_worker": "background.js"
   },
   "commands": {
     "translate-selected-text": {

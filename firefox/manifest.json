@@ -9,7 +9,8 @@
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "cookies"
   ],
   "host_permissions": [
     "*://translate.kagi.com/*"
