@@ -20,7 +20,7 @@ chrome: clean_chrome
 	cp $(SRC)/*.html $(DIST_CHROME)/
 	cp chrome/manifest.json $(DIST_CHROME)/manifest.json
 	cp icon.png $(DIST_CHROME)
-	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.js $(DIST_FIREFOX)
+	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.js $(DIST_CHROME)
 	tsc src/*.ts --module es2015 --target es2015 --outDir $(DIST_CHROME)
 	cd $(DIST_CHROME) && zip -r ../chrome-extension.zip *
 
