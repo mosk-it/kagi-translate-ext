@@ -1,5 +1,3 @@
-import { getBrowser } from './webext-polyfill.js';
-
 interface Settings {
   token: string;
   fromLang: string;
@@ -13,8 +11,8 @@ interface TranslationResponse {
 
 class TranslateApp {
   private translateText: HTMLTextAreaElement;
-  private fromLang: HTMLSelectElement;
-  private toLang: HTMLSelectElement;
+  private fromLangEl: HTMLSelectElement;
+  private toLangEl: HTMLSelectElement;
   private translateButton: HTMLButtonElement;
   private reverseLangsButton: HTMLButtonElement;
   private resultDiv: HTMLDivElement;
@@ -23,56 +21,73 @@ class TranslateApp {
 
   constructor() {
     this.translateText = document.getElementById('translateText') as HTMLTextAreaElement;
-    this.fromLang = document.getElementById('fromLang') as HTMLSelectElement;
-    this.toLang = document.getElementById('toLang') as HTMLSelectElement;
+    this.fromLangEl = document.getElementById('fromLang') as HTMLSelectElement;
+    this.toLangEl = document.getElementById('toLang') as HTMLSelectElement;
     this.translateButton = document.getElementById('translateButton') as HTMLButtonElement;
     this.reverseLangsButton = document.getElementById('reverseLangsButton') as HTMLButtonElement;
     this.resultDiv = document.getElementById('result') as HTMLDivElement;
     this.settings = { token: '', fromLang: '', toLang: '', selectedLanguages: [] };
-    this.browser = getBrowser();
   }
 
   async initialize(): Promise<void> {
-    await this.loadStoredText();
-    await this.loadStoredLanguages();
-    this.attachEventListeners();
+      console.log('initialize');
+      this.loadText();
+      await this.loadStoredLanguages();
+      this.attachEventListeners();
   }
 
-  private async loadStoredText(): Promise<void> {
-    const storedData = await this.browser.storage.local.get('translatedSelectedText');
-    if (storedData.translatedSelectedText) {
-      this.translateText.value = storedData.translatedSelectedText;
-      this.translateText.focus();
-      await this.browser.storage.local.remove('translatedSelectedText');
-    } else {
-        //const response = await this.browser.runtime.sendMessage({ action: 'selectedText' },);
-        let yy = () => { console.log('333'); }
-        let tt = await this.browser.runtime.sendMessage({ action: 'selectedText', param2: this.translateText })
-        console.log(tt)
-        this.translateText.value = tt;
-        this.translateText.focus();
 
-        //let tt = this.browser.runtime.sendMessage({ action: 'selectedText', param2: yy }).then((rr) => {
-        //if (rr) {
-        //console.log(rr)
-        //    this.translateText.value = rr
-        //    this.translateText.focus();
-        //}
-        //
-        //});
-        console.log(tt);
-    }
+  private async storeSelectedText(msg: string):  Promise<void> {
+
+      await browser.storage.local.set({
+          translatedSelectedText2: msg 
+      });
+
+      console.log('storeSelectedText2');
+      browser.storage.local.get('translatedSelectedText2').then((r)=> { console.log(r);});
+  }
+
+  /*
+   * Loads either currently selected text or previously selected (if no selection)
+   */
+  private async loadText(): Promise<void> {
+
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+      let selText = await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => { return window.getSelection().toString(); }
+      }).then((results) => {
+          if (results && results[0]) {
+              console.log('result1: ', results)
+              let selText = results[0].result;
+              return selText
+
+          }
+      });
+
+      if (selText) {
+          this.storeSelectedText(selText);
+          this.translateText.value = selText;
+          this.translateText.focus();
+      } else {
+          const storedData = await browser.storage.local.get('translatedSelectedText2');
+          if (storedData.translatedSelectedText2) {
+              this.translateText.value = storedData.translatedSelectedText2;
+              this.translateText.focus();
+          }
+      }
   }
 
   private async loadStoredLanguages(): Promise<void> {
-    const result = await this.browser.storage.sync.get(['selectedLanguages', 'fromLang', 'toLang']);
+    const result = await browser.storage.sync.get(['selectedLanguages', 'fromLang', 'toLang']);
     const selectedLanguages = result.selectedLanguages || [];
     this.settings.selectedLanguages = selectedLanguages;
-    this.populateLanguageDropdown(this.fromLang, selectedLanguages);
-    this.populateLanguageDropdown(this.toLang, selectedLanguages);
+    this.populateLanguageDropdown(this.fromLangEl, selectedLanguages);
+    this.populateLanguageDropdown(this.toLangEl, selectedLanguages);
 
-    if (result.fromLang) this.fromLang.value = result.fromLang;
-    if (result.toLang) this.toLang.value = result.toLang;
+    if (result.fromLang) this.fromLangEl.value = result.fromLang;
+    if (result.toLang) this.toLangEl.value = result.toLang;
   }
 
   private populateLanguageDropdown(selectElement: HTMLSelectElement, languages: string[]): void {
@@ -87,15 +102,15 @@ class TranslateApp {
 
   private attachEventListeners(): void {
 
-    this.fromLang.addEventListener('change', () => {
-      console.log(this.fromLang.value);
-      this.browser.storage.sync.set({ fromLang: this.fromLang.value });
+    this.fromLangEl.addEventListener('change', () => {
+      console.log(this.fromLangEl.value);
+      browser.storage.sync.set({ fromLang: this.fromLangEl.value });
     });
 
 
-    this.toLang.addEventListener('change', () => {
-      console.log(this.toLang.value);
-      this.browser.storage.sync.set({ toLang: this.toLang.value });
+    this.toLangEl.addEventListener('change', () => {
+      console.log(this.toLangEl.value);
+      browser.storage.sync.set({ toLang: this.toLangEl.value });
     });
 
 
@@ -109,16 +124,16 @@ class TranslateApp {
   }
 
   private reverseLanguages(): void {
-    const tmp = this.fromLang.value;
-    this.fromLang.value = this.toLang.value;
-    this.toLang.value = tmp;
+    const tmp = this.fromLangEl.value;
+    this.fromLangEl.value = this.toLangEl.value;
+    this.toLangEl.value = tmp;
   }
 
   private async translateTextToOtherLanguage(): Promise<void> {
     const text = this.translateText.value.trim();
     if (!text) return;
 
-    const settings = await this.browser.storage.sync.get(['token']);
+    const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
 
     try {
@@ -130,8 +145,8 @@ class TranslateApp {
           'Accept': 'application/json',
         },
         body: new URLSearchParams({
-          from: this.fromLang.value,
-          to: this.toLang.value,
+          from: this.fromLangEl.value,
+          to: this.toLangEl.value,
           text: text,
         }),
       });
@@ -149,6 +164,14 @@ class TranslateApp {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOMContentLoaded');
+
+  let xd = await browser.storage.local.get('translatedSelectedText2');
+  console.log('xd')
+  console.log(xd)
+
   const app = new TranslateApp();
+  browser.storage.local.get('translatedSelectedText2').then((s) => { console.log('STORAGE2:');console.log(s);});
   await app.initialize();
+  browser.storage.local.get('translatedSelectedText2').then((s) => { console.log('STORAGE3:');console.log(s);});
 });
