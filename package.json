@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/firefox-webext-browser": "^120.0.4",
+    "webextension-polyfill": "^0.12.0"
+  }
+}
