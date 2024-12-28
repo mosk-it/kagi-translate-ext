@@ -1,28 +1,31 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Kagi Translate Extension",
   "version": "0.1.0",
   "description": "Translate text using Kagi Translate",
-  "applications": {
-    "gecko": {
-      "id": "your-extension-id@example.com"
-    }
-  },
   "icons": {
     "48": "icon.png"
   },
   "permissions": [
     "activeTab",
     "storage",
-    "scripting",
-    "https://translate.kagi.com/*"
+    "scripting"
   ],
-  "browser_action": {
-    "default_icon": "icon.png",
-    "default_popup": "popup.html"
+  "host_permissions": [
+    "*://translate.kagi.com/*"
+  ],
+  "action": {
+      "default_popup": "popup.html",
+      "default_title": "Kagi Translate"
+  },
+  "browser_specific_settings": {
+      "gecko": {
+          "id": "kagi-translate-ext@mosk.it",
+          "strict_min_version": "58.0"
+      }
   },
   "background": {
-    "scripts": [ "background.js" ],
+    "scripts": [ "browser-polyfill.js", "background.js" ],
     "type": "module"
   },
   "commands": {
