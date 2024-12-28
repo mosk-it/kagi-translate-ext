@@ -33,6 +33,4 @@ clean_chrome:
 	rm -f chrome-extension.zip
 
 clean: clean_firefox clean_chrome
-	rm -rf dist
-
-
+	rm -rf dist/*
