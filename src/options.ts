@@ -76,10 +76,25 @@ class SettingsManager {
     this.saveButton.addEventListener('click', this.saveSettings.bind(this));
   }
 
+  /*
+   * extracts token from url like https://kagi.com/search?token=ZZZ.YYY
+   */
+  private getTokenOutOfURLParams(): void {
+      this.kagiToken.value = (new URLSearchParams((
+          new URL(this.kagiToken.value)
+      ).search)).get('token');
+  }
+
   private async saveSettings(): Promise<void> {
     const selectedLanguages = this.getSelectedLanguages();
 
     try {
+       let token = this.kagiToken.value;
+      if (token.includes('kagi.com') && token.includes('token=')) {
+          this.getTokenOutOfURLParams();
+      }
+
+
       await this.browser.storage.sync.set({
         token: this.kagiToken.value.trim(),
         selectedLanguages
