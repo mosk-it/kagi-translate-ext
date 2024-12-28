@@ -1,16 +1,16 @@
-# Kagi Translate Firefox Extension (Unofficial)
+# Kagi Translate Extension (Unofficial)
+
+Extensions for firefox and chrome that translate selected text using kagi.translate.com service.
 
 ## Installation
-1. Clone this repository
-2. Open Firefox and go to `about:debugging`
-3. Click "This Firefox" in the left sidebar
-4. Click "Load Temporary Add-on"
-5. Navigate to the extension directory and select `manifest.json`
 
-## Configuration
-1. Open the extension options
-2. Enter your Kagi Authorization Token
-3. Select languages
+1. There are two extensions in dist folder, currently only available to install in debug mode (about:debugging in firefox and chrome://extensions with developer mode turned on)
+2. After installation go to options of the extension and enter your Kagi Authorization Token and select languages you want to use.
+
+
+![](./images/screen-010.png)
+![](./images/screen-020.png)
+
 
 ## Note
 This is an unofficial extension and is not affiliated with Kagi.
