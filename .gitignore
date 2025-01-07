@@ -1,2 +1,4 @@
 debug/
 node_modules
+dist/firefox
+dist/chrome
