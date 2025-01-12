@@ -1,3 +1,5 @@
+import { ALL_LANGUAGES } from './languages';
+
 class SettingsManager {
   private kagiToken: HTMLInputElement;
   private languageFilter: HTMLInputElement;
@@ -6,12 +8,8 @@ class SettingsManager {
   private statusDiv: HTMLDivElement;
   private browser;
 
-  private readonly allLanguages: string[] = [
-    'Automatic', 'English', 'Spanish', 'French', 'German', 'Italian',
-    'Portuguese', 'Russian', 'Chinese', 'Japanese', 'Arabic', 'Korean',
-    'Dutch', 'Swedish', 'Polish', 'Turkish', 'Hindi', 'Hebrew', 'Thai',
-    'Vietnamese', 'Indonesian', 'Filipino', 'Malay'
-  ];
+  private readonly allLanguages: string[] = ALL_LANGUAGES;
+
 
   constructor() {
     this.browser = browser;
@@ -20,6 +18,8 @@ class SettingsManager {
     this.languageGrid = document.getElementById('languageGrid') as HTMLDivElement;
     this.saveButton = document.getElementById('saveSettings') as HTMLButtonElement;
     this.statusDiv = document.getElementById('status') as HTMLDivElement;
+    this.showAllLangsButton = document.getElementById('showAllLangs') as HTMLButtonElement;
+    
 
     this.initialize();
   }
@@ -32,27 +32,38 @@ class SettingsManager {
 
   private renderLanguagesCheckboxes(languages: string[]): void {
     this.languageGrid.innerHTML = '';
-    languages.forEach(lang => {
-      const languageDiv = this.createLanguageCheckbox(lang);
+    languages.forEach(ob => {
+      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.hide);
       this.languageGrid.appendChild(languageDiv);
     });
   }
 
-  private createLanguageCheckbox(lang: string): HTMLDivElement {
+  private langToId(lang: string): string {
+      return 'lang-' + lang.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-');
+  }
+
+  private createLanguageCheckbox(lang: string, isHidden: boolean): HTMLDivElement {
     const languageDiv = document.createElement('div');
     languageDiv.classList.add('language-checkbox');
 
+    let langId = this.langToId(lang);
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.id = `lang-${lang}`;
+    checkbox.id = langId;
     checkbox.value = lang;
 
     const label = document.createElement('label');
-    label.htmlFor = `lang-${lang}`;
+    label.htmlFor = langId;
+    if (isHidden) {
+        languageDiv.style.display = 'none';
+    }
     label.textContent = lang;
 
     languageDiv.appendChild(checkbox);
     languageDiv.appendChild(label);
+
+
     return languageDiv;
   }
 
@@ -62,9 +73,13 @@ class SettingsManager {
       this.kagiToken.value = result.token || '';
 
       const selectedLanguages = result.selectedLanguages || [];
-      document.querySelectorAll('#languageGrid input[type="checkbox"]').forEach((checkbox: HTMLInputElement) => {
-        checkbox.checked = selectedLanguages.includes(checkbox.value);
-      });
+        for (let selectedLang of selectedLanguages) {
+            let el = document.getElementById(this.langToId(selectedLang));
+            if (el) {
+                el.checked = true;
+                el.parentElement.style.display = 'flex';
+            }
+        }
     } catch (error) {
       console.error('Error restoring settings:', error);
     }
@@ -72,6 +87,7 @@ class SettingsManager {
 
   private addEventListeners(): void {
     this.saveButton.addEventListener('click', this.saveSettings.bind(this));
+    this.showAllLangsButton.addEventListener('click', this.showAllLangs.bind(this));
   }
 
   /*
@@ -103,6 +119,13 @@ class SettingsManager {
       this.showStatusMessage('Error saving settings', 'error');
       console.error('Error saving settings:', error);
     }
+  }
+
+  private async showAllLangs(): Promise<void> {
+    for (let langDiv of document.querySelectorAll('.language-checkbox')) {
+        langDiv.style.display = 'flex'
+    }
+    this.showAllLangsButton.style.display = 'none';
   }
 
   private getSelectedLanguages(): string[] {

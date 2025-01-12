@@ -59,11 +59,12 @@
       border-radius: 3px;
     }
 
+
     #saveSettings {
       background-color: var(--accent-color);
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 12px 20px;
       border-radius: 3px;
       cursor: pointer;
       transition: opacity 0.2s;
@@ -94,13 +95,17 @@
   <div class="container">
   <h2>Kagi Translate Settings</h2>
   <div class="setting-section">
-    <label for="kagiToken">Kagi Authorization Token (<a href="https://kagi.com/settings?p=user_details" target="_blank">-></a>)</label>
+    <h3>Kagi Authorization Token (<a href="https://kagi.com/settings?p=user_details" target="_blank">-></a>)</h3>
     <input type="password" id="kagiToken" placeholder="Enter your Kagi token">
   </div>
   <div class="setting-section">
-    <label>Select Preferred Languages:</label>
-    <div id="languageGrid" class="language-grid"></div>
-  </div>
+    <h3>Select Preferred Languages:</h3>
+    
+    <div id="languageGrid" class="language-grid">
+    </div>
+    <br />
+    <button id="showAllLangs">Show All Languages</button>
+  </div> <br />
   <button id="saveSettings">Save Settings</button>
   <div id="status"></div>
   <script type="module" src="browser-polyfill.js"></script>

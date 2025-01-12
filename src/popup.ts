@@ -169,10 +169,6 @@ class TranslateApp {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  await browser.storage.local.get('translatedSelectedText2');
-
   const app = new TranslateApp();
-  browser.storage.local.get('translatedSelectedText2').then((s) => { console.log('STORAGE2:');console.log(s);});
   await app.initialize();
-  browser.storage.local.get('translatedSelectedText2').then((s) => { console.log('STORAGE3:');console.log(s);});
 });
