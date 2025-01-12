@@ -1,5 +1,3 @@
-import { getBrowser } from './webext-polyfill.js';
-
 class SettingsManager {
   private kagiToken: HTMLInputElement;
   private languageFilter: HTMLInputElement;
@@ -16,7 +14,7 @@ class SettingsManager {
   ];
 
   constructor() {
-    this.browser = getBrowser();
+    this.browser = browser;
     this.kagiToken = document.getElementById('kagiToken') as HTMLInputElement;
     this.languageFilter = document.getElementById('languageFilter') as HTMLInputElement;
     this.languageGrid = document.getElementById('languageGrid') as HTMLDivElement;
