@@ -9,7 +9,7 @@ Extensions for firefox and chrome that translate selected text using kagi.transl
 
 
 ![](./images/screen-010.png)
-![](./images/screen-020.png)
+![](./images/screen-030.png)
 
 
 ## Note
