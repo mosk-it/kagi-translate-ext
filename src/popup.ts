@@ -30,7 +30,6 @@ class TranslateApp {
   }
 
   async initialize(): Promise<void> {
-      console.log('initialize');
       this.loadText();
       await this.loadStoredLanguages();
       this.attachEventListeners();
@@ -43,7 +42,6 @@ class TranslateApp {
           translatedSelectedText2: msg 
       });
 
-      console.log('storeSelectedText2');
       browser.storage.local.get('translatedSelectedText2').then((r)=> { console.log(r);});
   }
 
@@ -59,7 +57,6 @@ class TranslateApp {
           func: () => { return window.getSelection().toString(); }
       }).then((results) => {
           if (results && results[0]) {
-              console.log('result1: ', results)
               let selText = results[0].result;
               return selText
 
@@ -103,13 +100,11 @@ class TranslateApp {
   private attachEventListeners(): void {
 
     this.fromLangEl.addEventListener('change', () => {
-      console.log(this.fromLangEl.value);
       browser.storage.sync.set({ fromLang: this.fromLangEl.value });
     });
 
 
     this.toLangEl.addEventListener('change', () => {
-      console.log(this.toLangEl.value);
       browser.storage.sync.set({ toLang: this.toLangEl.value });
     });
 
@@ -135,8 +130,6 @@ class TranslateApp {
 
     const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
-    console.log(token);
-    console.log(settings);
 
     try {
         await browser.cookies.set({
@@ -175,11 +168,8 @@ class TranslateApp {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOMContentLoaded');
 
-  let xd = await browser.storage.local.get('translatedSelectedText2');
-  console.log('xd')
-  console.log(xd)
+  await browser.storage.local.get('translatedSelectedText2');
 
   const app = new TranslateApp();
   browser.storage.local.get('translatedSelectedText2').then((s) => { console.log('STORAGE2:');console.log(s);});
