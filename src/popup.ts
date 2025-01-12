@@ -18,6 +18,7 @@ class TranslateApp {
   private resultDiv: HTMLDivElement;
   private settings: Settings;
   private browser?;
+  private messages: string[];
 
   constructor() {
     this.translateText = document.getElementById('translateText') as HTMLTextAreaElement;
@@ -27,14 +28,39 @@ class TranslateApp {
     this.reverseLangsButton = document.getElementById('reverseLangsButton') as HTMLButtonElement;
     this.resultDiv = document.getElementById('result') as HTMLDivElement;
     this.settings = { token: '', fromLang: '', toLang: '', selectedLanguages: [] };
+    this.messages = [];
   }
 
   async initialize(): Promise<void> {
       this.loadText();
       await this.loadStoredLanguages();
       this.attachEventListeners();
+      this.showMessages();
   }
 
+
+  private async showMessages(): Promise<void> {
+      if (this.messages.length > 0) {
+
+          for (let i=0; i <= this.messages.length; i++) {
+
+              let msg = this.messages[i];
+
+              let messageElement = document.createElement('span');
+              messageElement.innerHTML = msg;
+              document.getElementById('message-box').append(messageElement)
+
+              const index = this.messages.indexOf(item);
+              if (index > -1) {
+                  this.messages.splice(index, 1);
+              }
+          }
+
+
+
+
+      }
+  }
 
   private async storeSelectedText(msg: string):  Promise<void> {
 
@@ -42,7 +68,6 @@ class TranslateApp {
           translatedSelectedText2: msg 
       });
 
-      browser.storage.local.get('translatedSelectedText2').then((r)=> { console.log(r);});
   }
 
   /*
@@ -95,6 +120,10 @@ class TranslateApp {
       option.textContent = lang;
       selectElement.appendChild(option);
     });
+
+    if (languages.length == 0) {
+        this.messages.push('Go to options and select preffered languages');
+    }
   }
 
   private attachEventListeners(): void {
@@ -168,7 +197,6 @@ class TranslateApp {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
   const app = new TranslateApp();
   await app.initialize();
 });
