@@ -12,6 +12,16 @@ Extensions for firefox and chrome that translate selected text using kagi.transl
 ![](./images/screen-030.png)
 
 
+## Permissions
+
+This addon uses following permissions:
+
+- `activeTab`, `scripting` - on active tab get selected text and put it in popup's textarea to translate
+- `storage` - keep settings
+- `cookies` - use to auth with translate.kagi.com
+
+
+
 ## Note
 This is an unofficial extension and is not affiliated with Kagi.
 As well as it's rather alpha state
