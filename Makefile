@@ -18,7 +18,7 @@ firefox: clean_firefox
 	cp images/icon.png $(DIST_FIREFOX)
 	npm install
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_FIREFOX)
-	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.zip *
+	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.ext *
 	rm -rf $(DIST_FIREFOX)
 
 chrome: clean_chrome
@@ -29,7 +29,7 @@ chrome: clean_chrome
 	npm install
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_CHROME)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_CHROME)
-	cd $(DIST_CHROME) && zip -r ../chrome-extension.zip *
+	cd $(DIST_CHROME) && zip -r ../chrome-extension.ext *
 	rm -rf $(DIST_CHROME)
 
 
@@ -55,11 +55,11 @@ clean_docker:
 
 clean_firefox:
 	rm -rf $(DIST_FIREFOX)
-	rm -f firefox-extension.zip
+	rm -f firefox-extension.ext
 
 clean_chrome:
 	rm -rf $(DIST_CHROME)
-	rm -f chrome-extension.zip
+	rm -f chrome-extension.ext
 
 clean: clean_firefox clean_chrome clean_docker
 	rm -rf dist/*

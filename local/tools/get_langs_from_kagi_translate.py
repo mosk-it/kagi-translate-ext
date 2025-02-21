@@ -68,7 +68,7 @@ def extract_languages(html):
 
     return languages
 
-def process_language_visibility(languages):
+def process_language_visibility(languages: list):
 
     for k,v in enumerate(languages):
         if v['iso'].lower() in MCUL_ISO:
@@ -76,7 +76,7 @@ def process_language_visibility(languages):
     return languages
 
 
-def save_languages_to_json(languages, filename):
+def save_languages_to_json(languages: list, filename: str):
     with open(filename, 'w') as f:
         f.write('[' + '\n')
 
@@ -124,11 +124,17 @@ def merge_languages_with_file(new_languages: list, previous_langs_file, backup=T
 
     for lang in current_languages:
         if lang["iso"]:
+
             # keep order {lang, iso}
-            new_lang_dict[lang["iso"].upper()] = {'lang': lang['lang'], 'iso': lang['iso']}
+            item = {
+                'lang': lang['lang'],
+                'iso': lang['iso']
+            }
+
+            new_lang_dict[lang["iso"]] = item
 
     for lang in new_languages:
-        new_lang_dict[lang["iso"].upper()] = {'lang': lang['lang'], 'iso': lang['iso']}
+        new_lang_dict[lang["iso"]] = {'lang': lang['lang'], 'iso': lang['iso']}
 
     merged_languages = list(new_lang_dict.values())
 
@@ -145,7 +151,8 @@ def main(target_url):
     if not html:
         return
 
-    languages = process_language_visibility(extract_languages(html))
+    languages = extract_languages(html)
+
 
     # TESTS
     # languages = [
@@ -157,7 +164,7 @@ def main(target_url):
 
 
     merged_langs = merge_languages_with_file(languages, j(SRC_DIR, 'languages.json'), backup=True)
-    save_languages_to_json(merged_langs, j(SRC_DIR, 'languages.json'))
+    save_languages_to_json(process_language_visibility(merged_langs), j(SRC_DIR, 'languages.json'))
 
     print(f"processed {len(languages)} languages")
     print(f"found {sum(1 for lang in languages if 'm' in lang )} visible languages")

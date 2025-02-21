@@ -1,6 +1,12 @@
 // import { ALL_LANGUAGES } from './languages';
 import  ALL_LANGUAGES  from './languages.json';
 
+interface LanguageInterface {
+  lang: string;
+  iso: string;
+  m?: boolean;
+}
+
 console.log(ALL_LANGUAGES);
 
 class SettingsManager {
