@@ -9,9 +9,10 @@ class SettingsManager {
   private languageGrid: HTMLDivElement;
   private saveButton: HTMLButtonElement;
   private statusDiv: HTMLDivElement;
+  private showAllLangsButton: HTMLButtonElement;
   private browser;
 
-  private readonly allLanguages: string[] = ALL_LANGUAGES;
+  private readonly  allLanguages: LanguageInterface[] = ALL_LANGUAGES;
 
 
   constructor() {
@@ -28,15 +29,16 @@ class SettingsManager {
   }
 
   private async initialize(): Promise<void> {
-    this.renderLanguagesCheckboxes(this.allLanguages);
+    this.renderLanguagesCheckboxes();
     await this.restoreSelectedLanguages();
     this.addEventListeners();
   }
 
-  private renderLanguagesCheckboxes(languages: string[]): void {
+  private renderLanguagesCheckboxes(): void {
     this.languageGrid.innerHTML = '';
-    languages.forEach(ob => {
-      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.hide);
+    this.allLanguages.forEach(ob => {
+      //ob.m - is by default hidden
+      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.m);
       this.languageGrid.appendChild(languageDiv);
     });
   }
@@ -45,7 +47,7 @@ class SettingsManager {
       return 'lang-' + lang.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-');
   }
 
-  private createLanguageCheckbox(lang: string, isHidden: boolean): HTMLDivElement {
+  private createLanguageCheckbox(lang: string, isVisible: boolean = false): HTMLDivElement {
     const languageDiv = document.createElement('div');
     languageDiv.classList.add('language-checkbox');
 
@@ -58,7 +60,7 @@ class SettingsManager {
 
     const label = document.createElement('label');
     label.htmlFor = langId;
-    if (isHidden) {
+    if (!isVisible) {
         languageDiv.style.display = 'none';
     }
     label.textContent = lang;
