@@ -45,6 +45,11 @@ docker_chrome: docker_build
 docker_all: docker_build
 	docker run --rm -v $(PWD)/dist:/app/dist $(DOCKER_BUILDER_IMG) make
 
+
+get_langs_from_kagi:
+	python ./local/tools/get_langs_from_kagi_translate.py
+
+
 clean_docker:
 	docker rmi -f $(DOCKER_BUILDER_IMG)
 
