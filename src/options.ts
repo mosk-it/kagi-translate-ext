@@ -1,4 +1,7 @@
-import { ALL_LANGUAGES } from './languages';
+// import { ALL_LANGUAGES } from './languages';
+import  ALL_LANGUAGES  from './languages.json';
+
+console.log(ALL_LANGUAGES);
 
 class SettingsManager {
   private kagiToken: HTMLInputElement;
