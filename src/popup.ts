@@ -153,6 +153,34 @@ class TranslateApp {
     this.toLangEl.value = tmp;
   }
 
+
+  async createFormData(text: string, sessionToken: string) {
+
+    const formData = new FormData()
+
+    formData.append('session_token', sessionToken)
+    // formData.append('from', this.fromLangEl.value)
+    // formData.append('to', this.toLangEl.value)
+    // TODO
+    formData.append('from', 'en')
+    formData.append('to', 'Polish')
+    formData.append('text', text)
+    formData.append('name', 'text')
+    // formData.append('predictedLanguage', '123123') // their bug?
+    // formData.append('prediction', '')
+    formData.append('translationMode', JSON.stringify({
+      speaker_gender: 'unknown',
+      addressee_gender: 'unknown',
+      formality_level: 'neutral',
+      translation_style: 'natural',
+      context: ''
+    }))
+
+    console.log(formData)
+    return formData;
+  }
+
+
   private async translateTextToOtherLanguage(): Promise<void> {
     const text = this.translateText.value.trim();
     if (!text) return;
@@ -160,7 +188,7 @@ class TranslateApp {
     const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
 
-    try {
+    // try {
         await browser.cookies.set({
             url: 'https://translate.kagi.com',
             name: 'kagi_session',
@@ -172,16 +200,13 @@ class TranslateApp {
       const response = await fetch('https://translate.kagi.com/?/translate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'Authorization': token,
           'Accept': 'application/json',
+          'X-Kagi-Authorization': token,
         },
         credentials: 'include',
-        body: new URLSearchParams({
-          from: this.fromLangEl.value,
-          to: this.toLangEl.value,
-          text: text,
-        }),
+        body: await this.createFormData(text, token),
       });
 
       if (!response.ok) {
@@ -190,9 +215,9 @@ class TranslateApp {
 
       const data: TranslationResponse = await response.json();
       this.resultDiv.textContent = JSON.parse(data.data)[2] || 'Translation failed';
-    } catch (error) {
-      this.resultDiv.textContent = 'Error translating text';
-    }
+    // } catch (error) {
+    //   this.resultDiv.textContent = 'Error translating text';
+    // }
   }
 }
 
