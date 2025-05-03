@@ -11,6 +11,25 @@ Extensions for firefox and chrome that translate selected text using kagi.transl
 ![](./images/screen-010.png)
 ![](./images/screen-030.png)
 
+## Building
+
+`make` will create extension in `./dist` folder (it's already builded and included in repo tho)
+
+### requires installed npm
+
+```
+make firefox
+make chrome
+```
+
+### with docker
+
+```
+make firefox_docker
+make chrome_docker
+```
+
+
 
 ## Permissions
 
