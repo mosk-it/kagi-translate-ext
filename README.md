@@ -1,6 +1,6 @@
 # Kagi Translate Extension (Unofficial)
 
-Extensions for firefox and chrome that translate selected text using kagi.translate.com service.
+Extensions for firefox and chrome that translate selected text using translate.kagi.com service.
 
 ## Installation
 
