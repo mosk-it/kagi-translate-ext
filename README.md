@@ -4,9 +4,12 @@ Extensions for firefox and chrome that translate selected text using translate.k
 
 ## Installation
 
-1. There are two extensions in dist folder, currently only available to install in debug mode (about:debugging in firefox and chrome://extensions with developer mode turned on)
-2. After installation go to options of the extension and enter your Kagi Authorization Token and select languages you want to use.
+The extension is currently under review for listing on addons.mozilla.org.
+Due to the required $5 fee for publishing on the Chrome Web Store, there are no current plans to list the extension there.
+Currently, the extension can only be installed in debug mode.
 
+1. There are two extensions in dist folder, to install it in debug mode - `about:debugging` in firefox and `chrome://extensions` with developer mode in chrome
+2. After installation go to options of the extension and enter your Kagi Authorization Token (it might work without it, but there is some limit quota) and select languages you want to use.
 
 ![](./images/screen-010.png)
 ![](./images/screen-030.png)
@@ -43,4 +46,3 @@ This addon uses following permissions:
 
 ## Note
 This is an unofficial extension and is not affiliated with Kagi.
-As well as it's rather alpha state
