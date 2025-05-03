@@ -32,41 +32,38 @@ class TranslateApp {
   }
 
   async initialize(): Promise<void> {
-      this.loadText();
-      await this.loadStoredLanguages();
-      this.attachEventListeners();
-      this.showMessages();
+    this.loadText();
+    await this.loadStoredLanguages();
+    this.attachEventListeners();
+    this.showMessages();
   }
 
 
   private async showMessages(): Promise<void> {
-      if (this.messages.length > 0) {
+    const messageBox = document.getElementById('message-box');
+    if (!messageBox || this.messages.length === 0) {
+      return;
+    }
+    console.log(this.messages);
+    while (this.messages.length > 0) {
+      console.log(this.messages);
+      let msg = this.messages.shift();
+      let messageElement = document.createElement('div');
+      messageElement.className = 'msg';
 
-          for (let i=0; i <= this.messages.length; i++) {
-
-              let msg = this.messages[i];
-
-              let messageElement = document.createElement('span');
-              messageElement.innerHTML = msg;
-              document.getElementById('message-box').append(messageElement)
-
-              const index = this.messages.indexOf(item);
-              if (index > -1) {
-                  this.messages.splice(index, 1);
-              }
-          }
-
-
-
-
+      messageElement.append(msg!);
+      if (messageBox) {
+        messageBox.append(messageElement);
       }
+
+    }
   }
 
-  private async storeSelectedText(msg: string):  Promise<void> {
+  private async storeSelectedText(msg: string): Promise<void> {
 
-      await browser.storage.local.set({
-          translatedSelectedText2: msg 
-      });
+    await browser.storage.local.set({
+      translatedSelectedText2: msg
+    });
 
   }
 
@@ -75,30 +72,30 @@ class TranslateApp {
    */
   private async loadText(): Promise<void> {
 
-      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
-      let selText = await browser.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => { return window.getSelection().toString(); }
-      }).then((results) => {
-          if (results && results[0]) {
-              let selText = results[0].result;
-              return selText
+    let selText = await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => { return window.getSelection().toString(); }
+    }).then((results) => {
+      if (results && results[0]) {
+        let selText = results[0].result;
+        return selText
 
-          }
-      });
-
-      if (selText) {
-          this.storeSelectedText(selText);
-          this.translateText.value = selText;
-          this.translateText.focus();
-      } else {
-          const storedData = await browser.storage.local.get('translatedSelectedText2');
-          if (storedData.translatedSelectedText2) {
-              this.translateText.value = storedData.translatedSelectedText2;
-              this.translateText.focus();
-          }
       }
+    });
+
+    if (selText) {
+      this.storeSelectedText(selText);
+      this.translateText.value = selText;
+      this.translateText.focus();
+    } else {
+      const storedData = await browser.storage.local.get('translatedSelectedText2');
+      if (storedData.translatedSelectedText2) {
+        this.translateText.value = storedData.translatedSelectedText2;
+        this.translateText.focus();
+      }
+    }
   }
 
   private async loadStoredLanguages(): Promise<void> {
@@ -122,7 +119,10 @@ class TranslateApp {
     });
 
     if (languages.length == 0) {
-        this.messages.push('Go to options and select preffered languages');
+      let msgNoLangsSelectedWarn = 'Go to options and select preffered languages!'
+      if (!this.messages.includes(msgNoLangsSelectedWarn)) {
+        this.messages.push(msgNoLangsSelectedWarn);
+      }
     }
   }
 
@@ -160,14 +160,24 @@ class TranslateApp {
     const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
 
+
+    let msgNoTokenWarn = 'Token is empty, translation might not work, go to options to fix it'
+    if (token.length === 0 && !this.messages.includes(msgNoTokenWarn)) {
+      this.messages.push(msgNoTokenWarn);
+      this.showMessages(); //TODO: make this.messages observed
+    }
+
+    this.resultDiv.textContent = 'Translating...';
+
+
     try {
-        await browser.cookies.set({
-            url: 'https://translate.kagi.com',
-            name: 'kagi_session',
-            value: token,
-            domain: '.kagi.com',
-            secure: true
-        });
+      await browser.cookies.set({
+        url: 'https://translate.kagi.com',
+        name: 'kagi_session',
+        value: token,
+        domain: '.kagi.com',
+        secure: true
+      });
 
       const response = await fetch('https://translate.kagi.com/?/translate', {
         method: 'POST',
@@ -187,6 +197,7 @@ class TranslateApp {
       if (!response.ok) {
         throw new Error('Translation request failed');
       }
+
 
       const data: TranslationResponse = await response.json();
       this.resultDiv.textContent = JSON.parse(data.data)[2] || 'Translation failed';

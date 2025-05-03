@@ -17,6 +17,7 @@ firefox: clean_firefox
 	cp $(MANIFEST_FIREFOX) $(DIST_FIREFOX)/manifest.json
 	cp images/icon.png $(DIST_FIREFOX)
 	npm install
+	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_FIREFOX)
 	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.ext *
 	#rm -rf $(DIST_FIREFOX)
