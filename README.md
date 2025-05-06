@@ -43,6 +43,10 @@ This addon uses following permissions:
 - `cookies` - use to auth with translate.kagi.com
 
 
+## TODO
+
+- [ ] Look into streaming the response to reduce display latency and perceived lag.
+
 
 ## Note
 This is an unofficial extension and is not affiliated with Kagi.
