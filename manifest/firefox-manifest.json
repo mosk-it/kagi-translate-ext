@@ -26,21 +26,15 @@
       }
   },
   "background": {
-    "scripts": [ "browser-polyfill.min.js" ],
+    "scripts": [ "browser-polyfill.min.js", "background.js" ],
     "type": "module"
   },
   "commands": {
-    "translate-selected-text": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+Comma"
-      },
-      "description": "Translate selected text"
-    },
-    "open-translate-window": {
+    "open-popup": {
       "suggested_key": {
         "default": "Ctrl+Shift+Period"
       },
-      "description": "Open translation window"
+      "description": "Open popup and translate selected text"
     }
   },
   "options_ui": {

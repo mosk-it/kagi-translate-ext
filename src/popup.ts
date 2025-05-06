@@ -17,8 +17,10 @@ class TranslateApp {
   private reverseLangsButton: HTMLButtonElement;
   private resultDiv: HTMLDivElement;
   private settings: Settings;
+  private translating: boolean;
   private browser?;
   private messages: string[];
+  private autoTranslateEnabled: boolean = false; // track setting
 
   constructor() {
     this.translateText = document.getElementById('translateText') as HTMLTextAreaElement;
@@ -29,11 +31,13 @@ class TranslateApp {
     this.resultDiv = document.getElementById('result') as HTMLDivElement;
     this.settings = { token: '', fromLang: '', toLang: '', selectedLanguages: [] };
     this.messages = [];
+    this.translating = false;
   }
 
   async initialize(): Promise<void> {
-    this.loadText();
     await this.loadStoredLanguages();
+    await this.loadSettings(); // load all settings
+    this.loadText();
     this.attachEventListeners();
     this.showMessages();
   }
@@ -44,9 +48,7 @@ class TranslateApp {
     if (!messageBox || this.messages.length === 0) {
       return;
     }
-    console.log(this.messages);
     while (this.messages.length > 0) {
-      console.log(this.messages);
       let msg = this.messages.shift();
       let messageElement = document.createElement('div');
       messageElement.className = 'msg';
@@ -57,6 +59,7 @@ class TranslateApp {
       }
 
     }
+
   }
 
   private async storeSelectedText(msg: string): Promise<void> {
@@ -75,8 +78,9 @@ class TranslateApp {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
 
     let selText = await browser.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: () => { return window.getSelection().toString(); }
+      target: { tabId: tab.id! },
+      func: (() => { return window.getSelection()!.toString(); }) as any
+      // func: (() => { return window.getSelection().toString(); }) as any
     }).then((results) => {
       if (results && results[0]) {
         let selText = results[0].result;
@@ -96,6 +100,27 @@ class TranslateApp {
         this.translateText.focus();
       }
     }
+    console.log('from loadText: this.autoTranslateEnabled, this.translating');
+    console.log(this.autoTranslateEnabled, this.translating);
+
+    console.log('from loadSettings: this.autoTranslateEnabled, this.translating');
+    console.log(this.autoTranslateEnabled, this.translating);
+    if(this.autoTranslateEnabled && ! this.translating) {
+      this.translateTextToOtherLanguage();
+    }
+
+
+  }
+
+
+  private async loadSettings(): Promise<void> {
+    const settings = await browser.storage.sync.get(['token', 'fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
+    this.settings.token = settings.token || '';
+    this.settings.fromLang = settings.fromLang || '';
+    this.settings.toLang = settings.toLang || '';
+    this.settings.selectedLanguages = settings.selectedLanguages || [];
+    this.autoTranslateEnabled = settings.autoTranslateOnPopup || false; // load auto translate setting
+
   }
 
   private async loadStoredLanguages(): Promise<void> {
@@ -151,11 +176,23 @@ class TranslateApp {
     const tmp = this.fromLangEl.value;
     this.fromLangEl.value = this.toLangEl.value;
     this.toLangEl.value = tmp;
+
+    browser.storage.sync.set({
+      fromLang: this.fromLangEl.value,
+      toLang: this.toLangEl.value,
+    });
   }
 
-  private async translateTextToOtherLanguage(): Promise<void> {
+  public async translateTextToOtherLanguage(): Promise<void> {
+    console.log('translateTextToOtherLanguage START --- ')
+    this.translating = true;
     const text = this.translateText.value.trim();
-    if (!text) return;
+    console.log('== text');
+    console.log(text);
+    if (!text) {
+      this.translating = false;
+      return;
+    }
 
     const settings = await browser.storage.sync.get(['token']);
     const token = settings.token || '';
@@ -200,14 +237,18 @@ class TranslateApp {
 
 
       const data: TranslationResponse = await response.json();
-      this.resultDiv.textContent = JSON.parse(data.data)[2] || 'Translation failed';
+      let translatedContent = JSON.parse(data.data)[2] || 'Translation failed';
+      console.log(translatedContent);
+      this.resultDiv.textContent = translatedContent;
     } catch (error) {
       this.resultDiv.textContent = 'Error translating text';
     }
+
+    this.translating = false;
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const app = new TranslateApp();
-  await app.initialize();
+    const app = new TranslateApp();
+    await app.initialize();
 });

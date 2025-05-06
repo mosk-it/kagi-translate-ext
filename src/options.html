@@ -31,6 +31,15 @@
       background-color: #f9f9f9;
       padding: 10px;
       border-radius: 5px;
+      align-items: center;
+    }
+
+    .setting-section-inline {
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      display: inline;
     }
 
     label {
@@ -38,6 +47,10 @@
       font-weight: 500;
     }
 
+    .label-inline {
+      display: inline;
+      font-weight: 500;
+    }
     .language-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -106,6 +119,13 @@
     <br />
     <button id="showAllLangs">Show All Languages</button>
   </div> <br />
+
+  <div class="setting-section"> <!-- new setting section -->
+    <h3>Auto-translate on Popup Open:</h3>
+    <input type="checkbox" id="autoTranslateOnPopup"> <!-- new checkbox -->
+    <label class="label-inline" for="autoTranslateOnPopup">Automatically Translate on popup</label>
+  </div>
+
   <button id="saveSettings">Save Settings</button>
   <div id="status"></div>
   <script type="module" src="browser-polyfill.min.js"></script>

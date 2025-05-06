@@ -4,7 +4,7 @@ import  ALL_LANGUAGES  from './languages.json';
 interface LanguageInterface {
   lang: string;
   iso: string;
-  m?: boolean;
+  m?: boolean; // is lang "common"?
 }
 
 console.log(ALL_LANGUAGES);
@@ -16,6 +16,7 @@ class SettingsManager {
   private saveButton: HTMLButtonElement;
   private statusDiv: HTMLDivElement;
   private showAllLangsButton: HTMLButtonElement;
+  private autoTranslateCheckbox: HTMLInputElement;
   private browser;
 
   private readonly  allLanguages: LanguageInterface[] = ALL_LANGUAGES;
@@ -28,6 +29,7 @@ class SettingsManager {
     this.languageGrid = document.getElementById('languageGrid') as HTMLDivElement;
     this.saveButton = document.getElementById('saveSettings') as HTMLButtonElement;
     this.statusDiv = document.getElementById('status') as HTMLDivElement;
+    this.autoTranslateCheckbox = document.getElementById('autoTranslateOnPopup') as HTMLInputElement; // get checkbox
     this.showAllLangsButton = document.getElementById('showAllLangs') as HTMLButtonElement;
     
 
@@ -37,6 +39,7 @@ class SettingsManager {
   private async initialize(): Promise<void> {
     this.renderLanguagesCheckboxes();
     await this.restoreSelectedLanguages();
+    await this.restoreSettings();
     this.addEventListeners();
   }
 
@@ -78,14 +81,25 @@ class SettingsManager {
     return languageDiv;
   }
 
+  // restore settings
+  private async restoreSettings(): Promise<void> {
+    const settings = await browser.storage.sync.get(['token', 'autoTranslateOnPopup']);
+    if (settings.token) {
+      this.kagiToken.value = settings.token;
+    }
+    if (settings.autoTranslateOnPopup !== undefined) { // check if exists
+      this.autoTranslateCheckbox.checked = settings.autoTranslateOnPopup;
+    }
+  }
   private async restoreSelectedLanguages(): Promise<void> {
     try {
-      const result = await this.browser.storage.sync.get(['selectedLanguages', 'token']);
-      this.kagiToken.value = result.token || '';
+      const result = await this.browser.storage.sync.get(['selectedLanguages']);
 
       const selectedLanguages = result.selectedLanguages || [];
         for (let selectedLang of selectedLanguages) {
             let el = document.getElementById(this.langToId(selectedLang));
+            console.log('el')
+            console.log(el)
             if (el) {
                 el.checked = true;
                 el.parentElement.style.display = 'flex';
@@ -95,6 +109,9 @@ class SettingsManager {
       console.error('Error restoring settings:', error);
     }
   }
+
+
+
 
   private addEventListeners(): void {
     this.saveButton.addEventListener('click', this.saveSettings.bind(this));
@@ -122,7 +139,8 @@ class SettingsManager {
 
       await this.browser.storage.sync.set({
         token: this.kagiToken.value.trim(),
-        selectedLanguages
+        selectedLanguages: selectedLanguages,
+        autoTranslateOnPopup: this.autoTranslateCheckbox.checked,
       });
 
       this.showStatusMessage('Settings saved successfully!', 'success');
@@ -133,16 +151,21 @@ class SettingsManager {
   }
 
   private async showAllLangs(): Promise<void> {
-    for (let langDiv of document.querySelectorAll('.language-checkbox')) {
-        langDiv.style.display = 'flex'
+    for (let langDiv of document.querySelectorAll<HTMLElement>('.language-checkbox')) {
+        langDiv.style.display = 'flex';
     }
     this.showAllLangsButton.style.display = 'none';
   }
 
+  // private getSelectedLanguages(): string[] {
+  //   return Array.from(document.querySelectorAll('#languageGrid input[type="checkbox"]:checked'))
+  //     .map((checkbox: HTMLInputElement) => checkbox.value);
+  // }
   private getSelectedLanguages(): string[] {
     return Array.from(document.querySelectorAll('#languageGrid input[type="checkbox"]:checked'))
-      .map((checkbox: HTMLInputElement) => checkbox.value);
+      .map((checkbox) => (checkbox as HTMLInputElement).value);
   }
+
 
   private showStatusMessage(message: string, statusClass: string): void {
     this.statusDiv.textContent = message;
