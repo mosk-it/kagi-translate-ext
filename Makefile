@@ -20,7 +20,7 @@ firefox: clean_firefox
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/background.ts --minify --target=es2015 --outdir=$(DIST_FIREFOX)
-	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.ext *
+	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.zip *
 	#rm -rf $(DIST_FIREFOX)
 
 chrome: clean_chrome
@@ -32,7 +32,7 @@ chrome: clean_chrome
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_CHROME)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_CHROME)
 	./node_modules/.bin/esbuild src/background.ts --minify --target=es2015 --outdir=$(DIST_CHROME)
-	cd $(DIST_CHROME) && zip -r ../chrome-extension.ext *
+	cd $(DIST_CHROME) && zip -r ../chrome-extension.zip *
 	#rm -rf $(DIST_CHROME)
 
 
@@ -58,11 +58,11 @@ clean_docker:
 
 clean_firefox:
 	rm -rf $(DIST_FIREFOX)
-	rm -f firefox-extension.ext
+	rm -f firefox-extension.zip
 
 clean_chrome:
 	rm -rf $(DIST_CHROME)
-	rm -f chrome-extension.ext
+	rm -f chrome-extension.zip
 
 clean: clean_firefox clean_chrome clean_docker
 	# rm -rf dist/*
