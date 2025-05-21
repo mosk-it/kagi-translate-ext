@@ -13,6 +13,10 @@ Extensions for firefox and chrome that translate selected text using translate.k
 ![](./images/screen-010.png)
 ![](./images/screen-040.png)
 
+
+Default shortcut to translate selected text is `Ctrl+Shift+.` which makes more sense after enabling "Automatically Translate on popup" in options (if you're into that)
+
+
 ## Building
 
 `make` will create extension in `./dist` folder (it's already builded and included in repo tho)
