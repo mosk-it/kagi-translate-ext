@@ -11,7 +11,7 @@ Extensions for firefox and chrome that translate selected text using translate.k
 3. Sign in to [translate.kagi.com](https://translate.kagi.com/).
 
 ![](./images/screen-010.png)
-![](./images/screen-030.png)
+![](./images/screen-040.png)
 
 ## Building
 
