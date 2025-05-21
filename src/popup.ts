@@ -1,12 +1,7 @@
 interface Settings {
-  token: string;
   fromLang: string;
   toLang: string;
   selectedLanguages: string[];
-}
-
-interface TranslationResponse {
-  data: string;
 }
 
 class TranslateApp {
@@ -21,6 +16,7 @@ class TranslateApp {
   private browser?;
   private messages: string[];
   private autoTranslateEnabled: boolean = false; // track setting
+  private model: string = "standard"; // might put it into options later
 
   constructor() {
     this.translateText = document.getElementById('translateText') as HTMLTextAreaElement;
@@ -29,7 +25,7 @@ class TranslateApp {
     this.translateButton = document.getElementById('translateButton') as HTMLButtonElement;
     this.reverseLangsButton = document.getElementById('reverseLangsButton') as HTMLButtonElement;
     this.resultDiv = document.getElementById('result') as HTMLDivElement;
-    this.settings = { token: '', fromLang: '', toLang: '', selectedLanguages: [] };
+    this.settings = { fromLang: '', toLang: '', selectedLanguages: [] };
     this.messages = [];
     this.translating = false;
   }
@@ -100,11 +96,6 @@ class TranslateApp {
         this.translateText.focus();
       }
     }
-    console.log('from loadText: this.autoTranslateEnabled, this.translating');
-    console.log(this.autoTranslateEnabled, this.translating);
-
-    console.log('from loadSettings: this.autoTranslateEnabled, this.translating');
-    console.log(this.autoTranslateEnabled, this.translating);
     if(this.autoTranslateEnabled && ! this.translating) {
       this.translateTextToOtherLanguage();
     }
@@ -114,8 +105,7 @@ class TranslateApp {
 
 
   private async loadSettings(): Promise<void> {
-    const settings = await browser.storage.sync.get(['token', 'fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
-    this.settings.token = settings.token || '';
+    const settings = await browser.storage.sync.get(['fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
     this.settings.fromLang = settings.fromLang || '';
     this.settings.toLang = settings.toLang || '';
     this.settings.selectedLanguages = settings.selectedLanguages || [];
@@ -184,61 +174,54 @@ class TranslateApp {
   }
 
   public async translateTextToOtherLanguage(): Promise<void> {
-    console.log('translateTextToOtherLanguage START --- ')
     this.translating = true;
     const text = this.translateText.value.trim();
-    console.log('== text');
-    console.log(text);
     if (!text) {
       this.translating = false;
       return;
-    }
-
-    const settings = await browser.storage.sync.get(['token']);
-    const token = settings.token || '';
-
-
-    let msgNoTokenWarn = 'Token is empty, translation might not work, go to options to fix it'
-    if (token.length === 0 && !this.messages.includes(msgNoTokenWarn)) {
-      this.messages.push(msgNoTokenWarn);
-      this.showMessages(); //TODO: make this.messages observed
     }
 
     this.resultDiv.textContent = 'Translating...';
 
 
     try {
-      await browser.cookies.set({
-        url: 'https://translate.kagi.com',
-        name: 'kagi_session',
-        value: token,
-        domain: '.kagi.com',
-        secure: true
-      });
 
-      const response = await fetch('https://translate.kagi.com/?/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': token,
-          'Accept': 'application/json',
+      const response = await fetch("https://translate.kagi.com/api/translate", {
+        "credentials": "include",
+        "headers": {
+          "Accept": "*/*",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Content-Type": "application/json",
+          "X-Signal": "abortable",
+          "Pragma": "no-cache",
+          "Cache-Control": "no-cache",
+          "Priority": "u=4"
         },
-        credentials: 'include',
-        body: new URLSearchParams({
+        "method": "POST",
+        "mode": "cors",
+        body: JSON.stringify({
           from: this.fromLangEl.value,
           to: this.toLangEl.value,
           text: text,
-        }),
+          stream: false,
+          prediction: "",
+          formality: "default",
+          speaker_gender: "unknown",
+          addressee_gender: "unknown",
+          translation_style: "natural",
+          context: "",
+          model: this.model,
+          dictionary_language: "en"
+        })
       });
+
 
       if (!response.ok) {
         throw new Error('Translation request failed');
       }
 
-
-      const data: TranslationResponse = await response.json();
-      let translatedContent = JSON.parse(data.data)[2] || 'Translation failed';
-      console.log(translatedContent);
+      const data = await response.json();
+      const translatedContent = data.translation || 'Translation failed';
       this.resultDiv.textContent = translatedContent;
     } catch (error) {
       this.resultDiv.textContent = 'Error translating text';

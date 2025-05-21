@@ -10,10 +10,10 @@
     "activeTab",
     "storage",
     "scripting",
-    "cookies"
+    "https://translate.kagi.com"
   ],
   "host_permissions": [
-    "*://translate.kagi.com/*"
+    "https://translate.kagi.com/"
   ],
   "action": {
       "default_popup": "popup.html",

@@ -10,7 +10,6 @@ interface LanguageInterface {
 console.log(ALL_LANGUAGES);
 
 class SettingsManager {
-  private kagiToken: HTMLInputElement;
   private languageFilter: HTMLInputElement;
   private languageGrid: HTMLDivElement;
   private saveButton: HTMLButtonElement;
@@ -24,7 +23,6 @@ class SettingsManager {
 
   constructor() {
     this.browser = browser;
-    this.kagiToken = document.getElementById('kagiToken') as HTMLInputElement;
     this.languageFilter = document.getElementById('languageFilter') as HTMLInputElement;
     this.languageGrid = document.getElementById('languageGrid') as HTMLDivElement;
     this.saveButton = document.getElementById('saveSettings') as HTMLButtonElement;
@@ -83,10 +81,7 @@ class SettingsManager {
 
   // restore settings
   private async restoreSettings(): Promise<void> {
-    const settings = await browser.storage.sync.get(['token', 'autoTranslateOnPopup']);
-    if (settings.token) {
-      this.kagiToken.value = settings.token;
-    }
+    const settings = await browser.storage.sync.get(['autoTranslateOnPopup']);
     if (settings.autoTranslateOnPopup !== undefined) { // check if exists
       this.autoTranslateCheckbox.checked = settings.autoTranslateOnPopup;
     }
@@ -118,27 +113,14 @@ class SettingsManager {
     this.showAllLangsButton.addEventListener('click', this.showAllLangs.bind(this));
   }
 
-  /*
-   * extracts token from url like https://kagi.com/search?token=ZZZ.YYY
-   */
-  private getTokenOutOfURLParams(): void {
-      this.kagiToken.value = (new URLSearchParams((
-          new URL(this.kagiToken.value)
-      ).search)).get('token');
-  }
 
   private async saveSettings(): Promise<void> {
     const selectedLanguages = this.getSelectedLanguages();
 
     try {
-       let token = this.kagiToken.value;
-      if (token.includes('kagi.com') && token.includes('token=')) {
-          this.getTokenOutOfURLParams();
-      }
 
 
       await this.browser.storage.sync.set({
-        token: this.kagiToken.value.trim(),
         selectedLanguages: selectedLanguages,
         autoTranslateOnPopup: this.autoTranslateCheckbox.checked,
       });
