@@ -105,7 +105,7 @@ class TranslateApp {
 
 
   private async loadSettings(): Promise<void> {
-    const settings = await browser.storage.sync.get(['fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
+    const settings = await browser.storage.local.get(['fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
     this.settings.fromLang = settings.fromLang || '';
     this.settings.toLang = settings.toLang || '';
     this.settings.selectedLanguages = settings.selectedLanguages || [];
@@ -114,7 +114,7 @@ class TranslateApp {
   }
 
   private async loadStoredLanguages(): Promise<void> {
-    const result = await browser.storage.sync.get(['selectedLanguages', 'fromLang', 'toLang']);
+    const result = await browser.storage.local.get(['selectedLanguages', 'fromLang', 'toLang']);
     const selectedLanguages = result.selectedLanguages || [];
     this.settings.selectedLanguages = selectedLanguages;
     this.populateLanguageDropdown(this.fromLangEl, selectedLanguages);
@@ -144,12 +144,12 @@ class TranslateApp {
   private attachEventListeners(): void {
 
     this.fromLangEl.addEventListener('change', () => {
-      browser.storage.sync.set({ fromLang: this.fromLangEl.value });
+      browser.storage.local.set({ fromLang: this.fromLangEl.value });
     });
 
 
     this.toLangEl.addEventListener('change', () => {
-      browser.storage.sync.set({ toLang: this.toLangEl.value });
+      browser.storage.local.set({ toLang: this.toLangEl.value });
     });
 
 
@@ -167,7 +167,7 @@ class TranslateApp {
     this.fromLangEl.value = this.toLangEl.value;
     this.toLangEl.value = tmp;
 
-    browser.storage.sync.set({
+    browser.storage.local.set({
       fromLang: this.fromLangEl.value,
       toLang: this.toLangEl.value,
     });
