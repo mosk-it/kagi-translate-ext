@@ -7,8 +7,6 @@ interface LanguageInterface {
   m?: boolean; // is lang "common"?
 }
 
-console.log(ALL_LANGUAGES);
-
 class SettingsManager {
   private languageFilter: HTMLInputElement;
   private languageGrid: HTMLDivElement;
@@ -16,6 +14,7 @@ class SettingsManager {
   private statusDiv: HTMLDivElement;
   private showAllLangsButton: HTMLButtonElement;
   private autoTranslateCheckbox: HTMLInputElement;
+  private openMinimalPopupCheckbox: HTMLInputElement;
   private browser;
 
   private readonly  allLanguages: LanguageInterface[] = ALL_LANGUAGES;
@@ -28,6 +27,7 @@ class SettingsManager {
     this.saveButton = document.getElementById('saveSettings') as HTMLButtonElement;
     this.statusDiv = document.getElementById('status') as HTMLDivElement;
     this.autoTranslateCheckbox = document.getElementById('autoTranslateOnPopup') as HTMLInputElement; // get checkbox
+    this.openMinimalPopupCheckbox = document.getElementById('openMinimalPopup') as HTMLInputElement;
     this.showAllLangsButton = document.getElementById('showAllLangs') as HTMLButtonElement;
     
 
@@ -81,20 +81,25 @@ class SettingsManager {
 
   // restore settings
   private async restoreSettings(): Promise<void> {
-    const settings = await browser.storage.sync.get(['autoTranslateOnPopup']);
+    const settings = await browser.storage.local.get([
+        'autoTranslateOnPopup',
+        'openMinimalPopup'
+    ]);
+
     if (settings.autoTranslateOnPopup !== undefined) { // check if exists
       this.autoTranslateCheckbox.checked = settings.autoTranslateOnPopup;
+    }
+    if (settings.openMinimalPopup !== undefined) {
+      this.openMinimalPopupCheckbox.checked = settings.openMinimalPopup;
     }
   }
   private async restoreSelectedLanguages(): Promise<void> {
     try {
-      const result = await this.browser.storage.sync.get(['selectedLanguages']);
+      const result = await this.browser.storage.local.get(['selectedLanguages']);
 
       const selectedLanguages = result.selectedLanguages || [];
         for (let selectedLang of selectedLanguages) {
             let el = document.getElementById(this.langToId(selectedLang));
-            console.log('el')
-            console.log(el)
             if (el) {
                 el.checked = true;
                 el.parentElement.style.display = 'flex';
@@ -115,14 +120,17 @@ class SettingsManager {
 
 
   private async saveSettings(): Promise<void> {
+
     const selectedLanguages = this.getSelectedLanguages();
 
     try {
 
+      this.openMinimalPopupCheckbox.checked
 
-      await this.browser.storage.sync.set({
+      await this.browser.storage.local.set({
         selectedLanguages: selectedLanguages,
         autoTranslateOnPopup: this.autoTranslateCheckbox.checked,
+        openMinimalPopup: this.openMinimalPopupCheckbox.checked,
       });
 
       this.showStatusMessage('Settings saved successfully!', 'success');
