@@ -11,6 +11,40 @@ DOCKER_BUILDER_IMG = kt-webext-builder
 all: firefox chrome
 
 
+
+firefox_esm: clean_firefox
+	mkdir -p $(DIST_FIREFOX)
+	cp $(SRC)/*.html $(DIST_FIREFOX)/
+	cp $(MANIFEST_FIREFOX) $(DIST_FIREFOX)/manifest.json
+	cp images/icon.png $(DIST_FIREFOX)
+	npm install
+	# cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_FIREFOX)
+
+	cp ./src/styles.css $(DIST_FIREFOX)
+	./node_modules/.bin/esbuild src/content-script.ts \
+		--bundle \
+		--target=es2015 \
+		--outfile=$(DIST_FIREFOX)/content-script.js \
+		--minify \
+		--format=iife
+
+	./node_modules/.bin/esbuild src/options.ts src/popup.ts src/background.ts \
+		--bundle \
+		--target=es2015 \
+		--outdir=$(DIST_FIREFOX) \
+		--splitting \
+		--tree-shaking \
+		--minify \
+		--format=esm
+
+	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.zip *
+
+
+
+
+
+
+
 firefox: clean_firefox
 	mkdir -p $(DIST_FIREFOX)
 	cp $(SRC)/*.html $(DIST_FIREFOX)/

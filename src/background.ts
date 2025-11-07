@@ -1,34 +1,27 @@
-const script = {
-    id: "content-script",
-    js: ["content-script.js"],
-    matches: ["<all_urls>"],
-};
+import browser from 'webextension-polyfill'
+import { TranslateAPI } from './shared/translateapi';
 
-async function toggleContentScript(action = "register") {
-    try {
-        if (action === "register") {
-            await browser.scripting.registerContentScripts([script]);
-        } else {
-            await browser.scripting.unregisterContentScripts({ ids: [script.id] });
+browser.runtime.onMessage.addListener(async (data, sender, sendResponse) => {
+    if (data.action === "translateText") {
+        try {
+            const tapi = new TranslateAPI();
+            let txt = data.txt;
+            let fromLang = await tapi.detectLang(txt); // TODO
+            let toLang = 'PL'; // TODO
+
+            const translatedContent = await tapi.translate(txt, fromLang, toLang, {
+                stream: true,
+                onUpdate: (chunk: string) => {
+                    browser.tabs.sendMessage(sender.tab!.id!, {
+                        action: 'partialTranslation',
+                        elementId: data.elementId,
+                        chunk: chunk
+                    });
+                }
+            });
+
+        } catch (error) {
+            console.log('Error translating text');
         }
-    } catch (e) { console.log('register failed'); }
-}
-
-(async () => {
-    const { openMinimalPopup } = await browser.storage.local.get("openMinimalPopup");
-    await toggleContentScript(openMinimalPopup ? "register" : "unregister");
-})();
-
-
-browser.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes.openMinimalPopup) {
-        toggleContentScript(changes.openMinimalPopup.newValue ? "register" : "unregister");
-    }
-});
-
-
-browser.runtime.onMessage.addListener((data, sender, sendResponse) => {
-    if (data.action === "textSelected") {
-        console.log("Received text:", data.message);
     }
 });
