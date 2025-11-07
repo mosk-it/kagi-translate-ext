@@ -4,7 +4,143 @@ interface Settings {
   selectedLanguages: string[];
 }
 
-class TranslateApp {
+class TranslateAPI {
+    protected translating: boolean = false;
+    protected model: string = "standard";
+
+    public isTranslating(): boolean {
+        return this.translating;
+    }
+
+    constructor() {}
+
+    private getAPIHeaders(): Record<string, string> {
+        return {
+            Accept: '*/*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Content-Type': 'application/json',
+            'X-Signal': 'abortable',
+            Pragma: 'no-cache',
+            'Cache-Control': 'no-cache',
+            Priority: 'u=4'
+        };
+    }
+
+    private async _makeRequest<T = any>(
+        endpoint: string,
+        body: Record<string, any>
+    ): Promise<T> {
+        const response = await fetch(`https://translate.kagi.com/api${endpoint}`, {
+            credentials: 'include',
+            headers: this.getAPIHeaders(),
+            method: 'POST',
+            mode: 'cors',
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+        }
+
+        return response.json();
+    }
+
+    protected async detectLang(text: string): Promise<string> {
+        const data = await this._makeRequest<{ language: string }>('/detect', { text });
+        return data.language;
+    }
+
+    private async* streamResponse(response: Response): AsyncGenerator<string, void, unknown> {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop()!;
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') return;
+                    try {
+                        const parsed = JSON.parse(data);
+                        yield parsed.delta || '';
+                    } catch {}
+                }
+            }
+        }
+    }
+
+    public async translate(
+        text: string,
+        fromLang: string,
+        toLang: string,
+        options: {
+            stream?: boolean;
+            onUpdate?: (chunk: string) => void;
+        } = {}
+    ): Promise<string> {
+        const { stream = false, onUpdate } = options;
+        this.translating = true;
+
+        try {
+            const response = await fetch('https://translate.kagi.com/api/translate', {
+                credentials: 'include',
+                headers: this.getAPIHeaders(),
+                method: 'POST',
+                mode: 'cors',
+                body: JSON.stringify({
+                    from: fromLang,
+                    to: toLang,
+                    text: text.trim(),
+                    stream: stream,
+                    prediction: '',
+                    formality: 'default',
+                    speaker_gender: 'unknown',
+                    addressee_gender: 'unknown',
+                    translation_style: 'natural',
+                    context: '',
+                    model: this.model,
+                    dictionary_language: 'en'
+                })
+            });
+
+            if (stream && onUpdate) {
+                let fullText = '';
+                for await (const chunk of this.streamResponse(response)) {
+                    fullText += chunk;
+                    onUpdate(chunk);
+                }
+                return fullText;
+            } else {
+                const data = await response.json();
+                return data.text || data.translation || '';
+            }
+        } finally {
+            this.translating = false;
+        }
+    }
+}
+
+
+
+class TranslateApp extends TranslateAPI {
+
+
+  async initialize(): Promise<void> {
+
+  }
+
+}
+
+
+
+class TranslatePopup extends TranslateAPI {
   private translateText: HTMLTextAreaElement;
   private fromLangEl: HTMLSelectElement;
   private toLangEl: HTMLSelectElement;
@@ -19,6 +155,7 @@ class TranslateApp {
   private model: string = "standard"; // might put it into options later
 
   constructor() {
+    super();
     this.translateText = document.getElementById('translateText') as HTMLTextAreaElement;
     this.fromLangEl = document.getElementById('fromLang') as HTMLSelectElement;
     this.toLangEl = document.getElementById('toLang') as HTMLSelectElement;
@@ -76,7 +213,6 @@ class TranslateApp {
     let selText = await browser.scripting.executeScript({
       target: { tabId: tab.id! },
       func: (() => { return window.getSelection()!.toString(); }) as any
-      // func: (() => { return window.getSelection().toString(); }) as any
     }).then((results) => {
       if (results && results[0]) {
         let selText = results[0].result;
@@ -96,16 +232,17 @@ class TranslateApp {
         this.translateText.focus();
       }
     }
-    if(this.autoTranslateEnabled && ! this.translating) {
+    if (this.autoTranslateEnabled && !this.translating) {
       this.translateTextToOtherLanguage();
     }
-
 
   }
 
 
   private async loadSettings(): Promise<void> {
-    const settings = await browser.storage.local.get(['fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup']);
+    const settings = await browser.storage.local.get([
+      'fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup', ''
+    ]);
     this.settings.fromLang = settings.fromLang || '';
     this.settings.toLang = settings.toLang || '';
     this.settings.selectedLanguages = settings.selectedLanguages || [];
@@ -173,65 +310,37 @@ class TranslateApp {
     });
   }
 
-  public async translateTextToOtherLanguage(): Promise<void> {
-    this.translating = true;
+
+  protected detectLanguageFromTo(text: text|undefined = '') {
+  }
+
+
+  public async translateTextToOtherLanguage(stream: boolean = true): Promise<void> {
     const text = this.translateText.value.trim();
-    if (!text) {
-      this.translating = false;
-      return;
-    }
-
-    this.resultDiv.textContent = 'Translating...';
-
-
+    if (!text) return;
+    this.resultDiv.textContent = '';
     try {
-
-      const response = await fetch("https://translate.kagi.com/api/translate", {
-        "credentials": "include",
-        "headers": {
-          "Accept": "*/*",
-          "Accept-Language": "en-US,en;q=0.5",
-          "Content-Type": "application/json",
-          "X-Signal": "abortable",
-          "Pragma": "no-cache",
-          "Cache-Control": "no-cache",
-          "Priority": "u=4"
-        },
-        "method": "POST",
-        "mode": "cors",
-        body: JSON.stringify({
-          from: this.fromLangEl.value,
-          to: this.toLangEl.value,
-          text: text,
-          stream: false,
-          prediction: "",
-          formality: "default",
-          speaker_gender: "unknown",
-          addressee_gender: "unknown",
-          translation_style: "natural",
-          context: "",
-          model: this.model,
-          dictionary_language: "en"
-        })
+      const translatedContent = await this.translate(text, this.fromLangEl.value, this.toLangEl.value, {
+        stream,
+        onUpdate: stream ? (chunk: string) => {
+          this.resultDiv.textContent += chunk;
+        } : undefined
       });
 
-
-      if (!response.ok) {
-        throw new Error('Translation request failed');
+      if (!stream) {
+        this.resultDiv.textContent = translatedContent;
       }
-
-      const data = await response.json();
-      const translatedContent = data.translation || 'Translation failed';
-      this.resultDiv.textContent = translatedContent;
     } catch (error) {
       this.resultDiv.textContent = 'Error translating text';
     }
-
-    this.translating = false;
   }
+
+
+
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const app = new TranslateApp();
-    await app.initialize();
+  const app = new TranslatePopup();
+  await app.initialize();
+
 });

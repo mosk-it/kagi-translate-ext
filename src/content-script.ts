@@ -1,11 +1,10 @@
-function copySelection() {
-  let selectedText = window.getSelection().toString().trim();
+function notifySelection() {
+    let sel = window.getSelection() ?? '';
+    let selectedText = sel.toString().trim();
 
-  console.log(copySelection);
-
-  if (selectedText) {
-    browser.runtime.sendMessage({ action: "textSelected", "message": selectedText })
-  }
+    if (selectedText) {
+        browser.runtime.sendMessage({ action: "textSelected", "message": selectedText })
+    }
 }
 
-document.addEventListener("mouseup", copySelection);
+document.addEventListener("mouseup", notifySelection);

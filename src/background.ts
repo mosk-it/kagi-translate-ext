@@ -1,40 +1,34 @@
-(async () => {
-  const settings = await browser.storage.local.get('openMinimalPopup');
-  console.log(settings);
-
-  let isOpenMinimalPopup = null;
-
-  if (settings.openMinimalPopup !== undefined) {
-    isOpenMinimalPopup = settings.openMinimalPopup;
-  }
-
-  const script = {
+const script = {
     id: "content-script",
     js: ["content-script.js"],
     matches: ["<all_urls>"],
-  };
+};
 
-  if (isOpenMinimalPopup) {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+async function toggleContentScript(action = "register") {
+    try {
+        if (action === "register") {
+            await browser.scripting.registerContentScripts([script]);
+        } else {
+            await browser.scripting.unregisterContentScripts({ ids: [script.id] });
+        }
+    } catch (e) { console.log('register failed'); }
+}
 
-    try { browser.scripting.registerContentScripts([script]); } catch (e) { }
-
-  } else {
-
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    try { browser.scripting.unregisterContentScripts({ 'ids': [script.id] }) } catch (e) { }
-  }
+(async () => {
+    const { openMinimalPopup } = await browser.storage.local.get("openMinimalPopup");
+    await toggleContentScript(openMinimalPopup ? "register" : "unregister");
 })();
 
 
 browser.storage.onChanged.addListener((changes, area) => {
-  console.log(changes);
-  console.log(area);
-})
+    if (area === "local" && changes.openMinimalPopup) {
+        toggleContentScript(changes.openMinimalPopup.newValue ? "register" : "unregister");
+    }
+});
 
 
 browser.runtime.onMessage.addListener((data, sender, sendResponse) => {
-  if (data.action === "textSelected") {
-    console.log("Received text:", data.message);
-  }
+    if (data.action === "textSelected") {
+        console.log("Received text:", data.message);
+    }
 });
