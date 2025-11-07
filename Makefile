@@ -20,6 +20,8 @@ firefox: clean_firefox
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/background.ts --minify --target=es2015 --outdir=$(DIST_FIREFOX)
+	./node_modules/.bin/esbuild src/content-script.ts --minify --target=es2015 --outdir=$(DIST_FIREFOX)
+ 
 	cd $(DIST_FIREFOX) && zip -r ../firefox-extension.zip *
 	#rm -rf $(DIST_FIREFOX)
 
@@ -32,6 +34,7 @@ chrome: clean_chrome
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_CHROME)
 	./node_modules/.bin/esbuild src/options.ts src/popup.ts --bundle --minify --target=es2015 --outdir=$(DIST_CHROME)
 	./node_modules/.bin/esbuild src/background.ts --minify --target=es2015 --outdir=$(DIST_CHROME)
+	./node_modules/.bin/esbuild src/content-script.ts --minify --target=es2015 --outdir=$(DIST_CHROME)
 	cd $(DIST_CHROME) && zip -r ../chrome-extension.zip *
 	#rm -rf $(DIST_CHROME)
 
