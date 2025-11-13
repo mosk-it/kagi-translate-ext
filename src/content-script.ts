@@ -1,127 +1,248 @@
+import { SettingsLoader } from "./shared/settings";
+
 let selectionTimeout: number | null = null;
 let currentIcon: HTMLElement | null = null;
+let currentPopup: HTMLElement | null = null;
+let closeHandler: ((event: MouseEvent) => void) | null = null;
+let closeIconHandler: ((event: MouseEvent) => void) | null = null;
 
-async function notifySelection(e: MouseEvent) {
 
-	if (selectionTimeout) {
-		clearTimeout(selectionTimeout);
-	}
+let boundBubbleHandler: ((e: MouseEvent) => void) | null = null;
+let boundSelectHandler: ((e: MouseEvent) => void) | null = null;
 
-	try {
-		const result = await browser.storage.local.get("openMinimalPopup");
-		if (result.openMinimalPopup !== true) {
-			return;
-		}
-	} catch (error) {
-		console.error("Error accessing storage:", error);
-		return;
-	}
-	// v run only if storage.local.openMinimalPopup 
+async function initializeWithSettings() {
+  const sl = new SettingsLoader();
+  const settings = await sl.loadSettings();
 
-	selectionTimeout = setTimeout(() => {
+  cleanupEventListeners();
 
-		const sel = window.getSelection();
-		const selectedText = sel?.toString().trim() || '';
-
-		if (sel && selectedText && sel.rangeCount > 0) {
-			showIcon(sel, { selectedText: selectedText, x: e.clientX, y: e.clientY });
-		}
-	}, 300);
+  if (!settings.selectionAction) {
+    return "";
+  } else if (settings.selectionAction === "bubbleIcon") {
+    boundBubbleHandler = (e: MouseEvent) =>
+      handleSelectionWithIconBubble(e, settings.customCSS);
+    document.addEventListener("mouseup", boundBubbleHandler);
+  } else if (settings.selectionAction === "selectPopup") {
+    boundSelectHandler = (e: MouseEvent) =>
+      handleSelectionWithSelectPopup(e, settings.customCSS);
+    document.addEventListener("mouseup", boundSelectHandler);
+  }
 }
 
-function createMinimalPopupContainer(offsetTop: number, offsetLeft: number, idx: string | null = null): HTMLDivElement {
+function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
+  if (selectionTimeout) {
+    clearTimeout(selectionTimeout);
+  }
 
-	const popup = document.createElement('div');
-	popup.className = 'text-popup-window';
-	popup.innerHTML = `
-		<div style="padding: 12px; font-family: sans-serif; font-size: 14px; max-width: 240px;">
-			<div class="translation-text" id="${idx}" style="margin-bottom: 8px;"></div>
-			<div style="color: #666;"></div>
-		</div>
-		`;
+  selectionTimeout = setTimeout(() => {
+    const sel = window.getSelection();
+    const selectedText = sel?.toString().trim() || "";
 
-	popup.style.cssText = `
-		top: ${offsetTop + 36}px;
-		left: ${offsetLeft}px;
-		position: absolute;
-		background: #fff;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		z-index: 10001;
-		`;
+    if (sel && selectedText && sel.rangeCount > 0) {
+      cleanUp();
 
-	return popup;
+      const icon = document.createElement("div");
+      icon.style.left = `${e.clientX}px`;
+      icon.style.top = `${e.clientY}px`;
+      icon.innerHTML = "💬";
+      icon.className = "bubble-icon-translate";
+
+      const autoRemoveTimeout = setTimeout(() => {
+        if (currentIcon) {
+          currentIcon.remove();
+          currentIcon = null;
+        }
+      }, 2000);
+
+      icon.addEventListener("click", (clickEvent) => {
+        clickEvent.stopPropagation();
+        clearTimeout(autoRemoveTimeout);
+        if (currentIcon) {
+          currentIcon.remove();
+          currentIcon = null;
+        }
+        if (closeIconHandler) {
+          document.removeEventListener("click", closeIconHandler);
+          closeIconHandler = null;
+        }
+
+        const idx = "tr-select-" + Date.now();
+        const popup = createSelectPopupContainer(
+          e.clientY + 10,
+          e.clientX + 10,
+          idx,
+        );
+
+        if (customCSS) {
+          const styleElement = document.createElement("style");
+          styleElement.textContent = customCSS;
+          styleElement.id = `custom-css-${Date.now()}`;
+          popup.appendChild(styleElement);
+        }
+
+        document.body.appendChild(popup);
+        currentPopup = popup;
+
+        browser.runtime.sendMessage({
+          action: "translateText",
+          txt: selectedText,
+          elementId: idx,
+        });
+
+        closeHandler = (event: MouseEvent) => {
+          if (!popup.contains(event.target as Node)) {
+            popup.remove();
+            currentPopup = null;
+            if (closeHandler) {
+              document.removeEventListener("click", closeHandler);
+              closeHandler = null;
+            }
+          }
+        };
+
+        setTimeout(() => {
+          document.addEventListener("click", closeHandler!);
+        }, 0);
+      });
+
+      document.body.appendChild(icon);
+      currentIcon = icon;
+
+      closeIconHandler = (event: MouseEvent) => {
+        if (currentIcon && !currentIcon.contains(event.target as Node)) {
+          currentIcon.remove();
+          currentIcon = null;
+          if (closeIconHandler) {
+            document.removeEventListener("click", closeIconHandler);
+            closeIconHandler = null;
+          }
+        }
+      };
+
+      setTimeout(() => {
+        document.addEventListener("click", closeIconHandler);
+      }, 0);
+    }
+  }, 300) as unknown as number;
 }
 
-function showIcon(selection: Selection, data: any) {
-	cleanUp();
+function handleSelectionWithSelectPopup(e: MouseEvent, customCSS: string) {
+  if (selectionTimeout) {
+    clearTimeout(selectionTimeout);
+  }
 
-	const icon = document.createElement('div');
+  selectionTimeout = setTimeout(() => {
+    const sel = window.getSelection();
+    const selectedText = sel?.toString().trim() || "";
 
-	icon.style.left = `${data.x}px`;
-	icon.style.top = `${data.y}px`;
-	icon.innerHTML = '💬';
-	icon.className = 'bubble-icon-translate';
+    if (sel && selectedText && sel.rangeCount > 0) {
+      cleanUp();
 
-	const autoRemoveTimeout = setTimeout(() => {
-		removeIcon();
-	}, 2000);
+      const idx = "tr-select-" + Date.now();
+      const popup = createSelectPopupContainer(
+        e.clientY + 10,
+        e.clientX + 10,
+        idx,
+      );
 
-	icon.addEventListener('click', (e) => {
-		e.stopPropagation();
+      if (customCSS) {
+        const styleElement = document.createElement("style");
+        styleElement.textContent = customCSS;
+        styleElement.id = `custom-css-${Date.now()}`;
+        popup.appendChild(styleElement);
+      }
 
-		clearTimeout(autoRemoveTimeout);
-		const idx = 'tr-2137-' + Date.now();
-		const popup = createMinimalPopupContainer(data.y + 10, data.x + 10, idx);
-		document.body.appendChild(popup);
+      document.body.appendChild(popup);
+      currentPopup = popup;
 
-		browser.runtime.sendMessage({
-			action: "translateText",
-			txt: data.selectedText,
-			elementId: idx,
-		});
+      browser.runtime.sendMessage({
+        action: "translateText",
+        txt: selectedText,
+        elementId: idx,
+      });
 
-		removeIcon();
+      closeHandler = (event: MouseEvent) => {
+        if (!popup.contains(event.target as Node)) {
+          popup.remove();
+          currentPopup = null;
+          if (closeHandler) {
+            document.removeEventListener("click", closeHandler);
+            closeHandler = null;
+          }
+        }
+      };
 
-		const close = (event: MouseEvent) => {
-			if (!popup.contains(event.target as Node)) {
-				popup.remove();
-				document.removeEventListener('click', close);
-			}
-		};
-
-		// avoid immediate trigger
-		setTimeout(() => {
-			document.addEventListener('click', close);
-		}, 0);
-	});
-
-	document.body.appendChild(icon);
-	currentIcon = icon;
+      setTimeout(() => {
+        document.addEventListener("click", closeHandler!);
+      }, 0);
+    }
+  }, 300) as unknown as number;
 }
 
+function createSelectPopupContainer(
+  offsetTop: number,
+  offsetLeft: number,
+  idx: string | null = null,
+): HTMLDivElement {
+  const popup = document.createElement("div");
+  popup.className = "select-popup-container";
+  popup.innerHTML = `
+    <div class="select-popup-content">
+      <p class="translation-text" id="${idx}" style=""></p>
+    </div>
+  `;
 
+  popup.style.cssText = `
+    top: ${offsetTop + 16}px;
+    left: ${offsetLeft}px;
+    position: absolute;
+    z-index: 10001;
+  `;
+
+  return popup;
+}
+
+function cleanupEventListeners() {
+  if (boundBubbleHandler) {
+    document.removeEventListener("mouseup", boundBubbleHandler);
+    boundBubbleHandler = null;
+  }
+  if (boundSelectHandler) {
+    document.removeEventListener("mouseup", boundSelectHandler);
+    boundSelectHandler = null;
+  }
+}
 
 browser.runtime.onMessage.addListener((data) => {
-	if (data.action === 'partialTranslation') {
-		const el = document.getElementById(data.elementId);
-		if (el) el.textContent += data.chunk;
-	}
+  if (data.action === "partialTranslation") {
+    const el = document.getElementById(data.elementId);
+    if (el) el.textContent += data.chunk;
+  }
 });
 
-function removeIcon() {
-	console.log('removeIcon')
-	if (currentIcon) {
-		currentIcon.remove();
-		currentIcon = null;
-	}
-}
 function cleanUp() {
-	console.log('cleanUp')
-	removeIcon();
-	document.removeEventListener('click', close);
-	document.querySelectorAll('.bubble-icon-translate').forEach(el => el.remove());
-	document.querySelectorAll('.text-popup-window').forEach(el => el.remove());
+  if (currentIcon) {
+    currentIcon.remove();
+    currentIcon = null;
+  }
+  if (currentPopup) {
+    currentPopup.remove();
+    currentPopup = null;
+  }
+  if (closeHandler) {
+    document.removeEventListener("click", closeHandler);
+    closeHandler = null;
+  }
+  if (closeIconHandler) {
+    document.removeEventListener("click", closeIconHandler);
+    closeIconHandler = null;
+  }
+  document
+    .querySelectorAll(".bubble-icon-translate")
+    .forEach((el) => el.remove());
+  document
+    .querySelectorAll(".select-popup-container")
+    .forEach((el) => el.remove());
 }
 
-document.addEventListener("mouseup", notifySelection);
+initializeWithSettings().catch(console.error);

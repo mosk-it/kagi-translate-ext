@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Kagi Translate Settings</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <style>
     :root {
       --bg-color: #ffffff;
@@ -73,6 +71,9 @@
       border-radius: 3px;
     }
 
+    #advancedToggle {
+      cursor: pointer;
+    }
 
     #saveSettings {
       background-color: var(--accent-color);
@@ -107,12 +108,15 @@
 </head>
 <body>
   <div class="container">
-  <h2>Kagi Translate Settings</h2>
+    <h2>Kagi Translate Settings</h2>
+
+    <div class="setting-section">
+      <h3>Account</h3>
+    <h3>You need to log in to</h3> <a href="https://translate.kagi.com/" target="_blank">translate.kagi.com</a>
+    </div>
+
   <div class="setting-section">
-    <h3>You need to sign in to</h3> <a href="https://translate.kagi.com/" target="_blank">translate.kagi.com</a>
-  </div>
-  <div class="setting-section">
-    <h3>Select Preferred Languages:</h3>
+    <h3>Languages Visible in Full Popup :</h3>
     
     <div id="languageGrid" class="language-grid">
     </div>
@@ -120,21 +124,57 @@
     <button id="showAllLangs">Show All Languages</button>
   </div> <br />
 
-  <div class="setting-section"> <!-- new setting section -->
-    <h3>Auto-translate on Popup Open:</h3>
-    <input type="checkbox" id="autoTranslateOnPopup"> <!-- new checkbox -->
-    <label class="label-inline" for="autoTranslateOnPopup">Automatically Translate on popup</label>
-  </div>
-  <div class="setting-section"> <!-- new setting section -->
-    <h3>Minimal Popup:</h3>
-    <input type="checkbox" id="openMinimalPopup"> <!-- new checkbox -->
-    <label class="label-inline" for="openMinimalPopup">Open minimal popup window</label>
-  </div>
+    <div class="setting-section">
+      <h3>Popup Behavior</h3>
+      <input type="checkbox" id="autoTranslateOnPopup" />
+      <label class="label-inline" for="autoTranslateOnPopup">Auto-translate when popup opens</label><br/>
 
-  <button id="saveSettings">Save Settings</button>
-  <div id="status"></div>
-  <script type="module" src="browser-polyfill.min.js"></script>
-  <script type="module" src="options.js"></script>
+    </div>
+    <div class="setting-section">
+      <h3>Selection Behaviour</h3>
+
+      <label>After selecting text</label>
+        <label class="label-inline"><input type="radio" id="selectionActionBubble" name="selectionAction" value="bubbleIcon" /> Show bubble icon, click to translate</label><br />
+        <label class="label-inline"><input type="radio" id="selectionActionInlinePopup" name="selectionAction" value="selectPopup" />Auto translate after selection </label><br />
+        <label class="label-inline"><input type="radio" id="selectionActionNothing" name="selectionAction" value="" />Do nothing</label>
+
+      
+    </div>
+
+    <div class="setting-section">
+      <h3>Auto Detection</h3>
+      <input type="checkbox" id="autoDetectLanguage" />
+      <label class="label-inline" for="autoDetectLanguage">Auto-detect source language</label><br/><br/>
+
+      <label for="autoDetectLangTo">Primary language:</label>
+      <select name="autoDetectLangTo" id="autoDetectLangTo">
+        <option value="">Pick language</option>
+        <option value="PL">Polish</option>
+        <option value="EN">English</option>
+        <option value="DE">German</option>
+      </select><br/><br/>
+
+      <label for="autoDetectLangToAlt">Fallback language (used if source text is in primary language):</label>
+      <select name="autoDetectLangToAlt" id="autoDetectLangToAlt">
+        <option value="">Pick language</option>
+        <option value="PL">Polish</option>
+        <option value="EN">English</option>
+        <option value="DE">German</option>
+      </select>
+    </div>
+
+    <div class="setting-section advanced-section">
+      <h3 id="advancedToggle">[+] Advanced Settings</h3>
+      <div id="advancedContent" style="display: none;">
+        <label for="customCSS">Custom CSS for select popup:</label><br/>
+        <textarea id="customCSS" rows="6" cols="50"></textarea><br/><br/>
+        <button id="resetCSS">Reset to Default</button>
+      </div>
+    </div>
+
+    <button id="saveSettings">Save Settings</button>
+    <div id="status"></div>
+    <script type="module" src="options.js"></script>
   </div>
 </body>
 </html>
