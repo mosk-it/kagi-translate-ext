@@ -34,8 +34,8 @@ class OptionsPage {
     // this.openMinimalPopupCheckbox = document.getElementById('openMinimalPopup') as HTMLInputElement;
 
     this.initializeEventListeners();
-
     this.renderLanguagesCheckboxes();
+    this.autoDetectionSelectFillLangs();
     this.loadSettingsIntoUI();
   }
 
@@ -236,6 +236,37 @@ class OptionsPage {
     return Array.from(document.querySelectorAll('#languageGrid input[type="checkbox"]:checked'))
       .map((checkbox) => (checkbox as HTMLInputElement).value);
   }
+
+
+  private autoDetectionSelectFillLangs() {
+    this.allLanguages.forEach((ob) => {
+      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.m);
+      this.languageGrid.appendChild(languageDiv);
+    });
+    this.populateLanguageToSelect("autoDetectLangTo", [...this.allLanguages]);
+    this.populateLanguageToSelect("autoDetectLangToAlt", [ ...this.allLanguages, ]);
+  }
+
+  private populateLanguageToSelect(
+    selectId: string,
+    languages: LanguageInterface[],
+  ): void {
+    languages.sort((x, y) => x.lang.localeCompare(y.lang));
+
+    let selectElement = document.getElementById(selectId);
+    if (!selectElement) {
+      console.error(`Not found select ${selectId}`);
+      return;
+    }
+
+    languages.forEach((lang) => {
+      const option = document.createElement("option");
+      option.setAttribute("value", lang.iso);
+      option.textContent = lang.lang;
+      selectElement.appendChild(option);
+    });
+  }
+
 
 }
 
