@@ -1,4 +1,5 @@
 import { SettingsLoader } from "./shared/settings";
+import browser from "webextension-polyfill";
 
 let selectionTimeout: number | null = null;
 let currentIcon: HTMLElement | null = null;
@@ -52,7 +53,7 @@ function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
           currentIcon.remove();
           currentIcon = null;
         }
-      }, 2000);
+      }, 3000);
 
       icon.addEventListener("click", (clickEvent) => {
         clickEvent.stopPropagation();

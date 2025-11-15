@@ -1,10 +1,10 @@
 import { TranslateAPI } from "./shared/translateapi";
-import browser from 'webextension-polyfill'
+import { LanguageInterface, SettingsInterface, SettingsLoader } from './shared/settings';
+var browser = require("webextension-polyfill");
 
-interface Settings {
+interface PopupSettings {
   fromLang: string;
   toLang: string;
-  selectedLanguages: string[];
 }
 
 
@@ -15,11 +15,12 @@ class TranslatePopup extends TranslateAPI {
   private translateButton: HTMLButtonElement;
   private reverseLangsButton: HTMLButtonElement;
   private resultDiv: HTMLDivElement;
-  private settings: Settings;
+  private popupSettings: PopupSettings;
   private translating: boolean;
-  private browser?;
+  private browser = browser;
   private messages: string[];
   private autoTranslateEnabled: boolean = false; // track setting
+  protected settings: SettingsInterface;
   protected model: string = "standard"; // might put it into options later
 
   constructor() {
@@ -30,14 +31,15 @@ class TranslatePopup extends TranslateAPI {
     this.translateButton = document.getElementById('translateButton') as HTMLButtonElement;
     this.reverseLangsButton = document.getElementById('reverseLangsButton') as HTMLButtonElement;
     this.resultDiv = document.getElementById('result') as HTMLDivElement;
-    this.settings = { fromLang: '', toLang: '', selectedLanguages: [] };
+    this.popupSettings = { fromLang: '', toLang: '' };
     this.messages = [];
     this.translating = false;
   }
 
   async initialize(): Promise<void> {
+    await this.loadSettings()
     await this.loadStoredLanguages();
-    await this.loadSettings(); // load all settings
+    await this.loadPopupSettings(); // load all settings
     this.loadText();
     this.attachEventListeners();
     this.showMessages();
@@ -90,8 +92,8 @@ class TranslatePopup extends TranslateAPI {
     });
 
     if (selText) {
-      this.storeSelectedText(selText);
-      this.translateText.value = selText;
+      this.storeSelectedText(selText as string); // TODO as string?
+      this.translateText.value = selText as string; // TODO as string?
       this.translateText.focus();
     } else {
       const storedData = await browser.storage.local.get('translatedSelectedText2');
@@ -107,34 +109,39 @@ class TranslatePopup extends TranslateAPI {
   }
 
 
-  private async loadSettings(): Promise<void> {
-    const settings = await browser.storage.local.get([
-      'fromLang', 'toLang', 'selectedLanguages', 'autoTranslateOnPopup', ''
+  private async loadPopupSettings(): Promise<void> {
+    const popupSettings = await browser.storage.local.get([
+      'fromLang', 'toLang'
     ]);
-    this.settings.fromLang = settings.fromLang || '';
-    this.settings.toLang = settings.toLang || '';
-    this.settings.selectedLanguages = settings.selectedLanguages || [];
-    this.autoTranslateEnabled = settings.autoTranslateOnPopup || false; // load auto translate setting
+    this.popupSettings.fromLang = popupSettings.fromLang || '';
+    this.popupSettings.toLang = popupSettings.toLang || '';
+    this.autoTranslateEnabled = this.settings.autoTranslateOnPopup || false; // load auto translate setting
 
   }
 
+  private async loadSettings(): Promise<void> {
+    const sl = new SettingsLoader()
+    this.settings = await sl.loadSettings();
+  }
+
+
   private async loadStoredLanguages(): Promise<void> {
-    const result = await browser.storage.local.get(['selectedLanguages', 'fromLang', 'toLang']);
-    const selectedLanguages = result.selectedLanguages || [];
-    this.settings.selectedLanguages = selectedLanguages;
+    const result = await browser.storage.local.get([ 'fromLang', 'toLang']);
+    const selectedLanguages = this.settings.selectedLanguages;
     this.populateLanguageDropdown(this.fromLangEl, selectedLanguages);
-    this.populateLanguageDropdown(this.toLangEl, selectedLanguages);
+    this.populateLanguageDropdown(this.toLangEl, selectedLanguages.filter(language => language.iso !== "auto"));
+
 
     if (result.fromLang) this.fromLangEl.value = result.fromLang;
     if (result.toLang) this.toLangEl.value = result.toLang;
   }
 
-  private populateLanguageDropdown(selectElement: HTMLSelectElement, languages: string[]): void {
+  private populateLanguageDropdown(selectElement: HTMLSelectElement, languages: LanguageInterface[]): void {
     selectElement.innerHTML = '';
     languages.forEach((lang) => {
       const option = document.createElement('option');
-      option.setAttribute('value', lang);
-      option.textContent = lang;
+      option.setAttribute('value', lang.iso);
+      option.textContent = lang.lang;
       selectElement.appendChild(option);
     });
 

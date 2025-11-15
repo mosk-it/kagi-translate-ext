@@ -143,20 +143,14 @@
 
     <div class="setting-section">
       <h3>Auto Detection</h3>
-      <input type="checkbox" id="autoDetectLanguage" />
-      <label class="label-inline" for="autoDetectLanguage">Auto-detect source language</label><br/><br/>
-
       <label for="autoDetectLangTo">Primary language:</label>
       <select name="autoDetectLangTo" id="autoDetectLangTo">
         <option value="">Pick language</option>
       </select><br/><br/>
 
-      <label for="autoDetectLangToAlt">Fallback language (used if source text is in primary language):</label>
+      <label for="autoDetectLangToAlt">Fallback language (used if source is in primary language):</label>
       <select name="autoDetectLangToAlt" id="autoDetectLangToAlt">
         <option value="">Pick language</option>
-        <option value="PL">Polish</option>
-        <option value="EN">English</option>
-        <option value="DE">German</option>
       </select>
     </div>
 
@@ -165,7 +159,7 @@
       <div id="advancedContent" style="display: none;">
         <label for="customCSS">Custom CSS for select popup:</label><br/>
         <textarea id="customCSS" rows="6" cols="50"></textarea><br/><br/>
-        <button id="resetCSS">Reset to Default</button>
+        <button id="resetCSS">Reset CSS to Default</button>
       </div>
     </div>
 

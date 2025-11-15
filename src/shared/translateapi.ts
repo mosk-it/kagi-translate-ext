@@ -40,12 +40,13 @@ export class TranslateAPI {
         return response;
     }
 
-    public async detectLang(text: string) {
+    public async detectLang(text: string): Promise<string | null> {
         const response = await this._makeRequest('/detect', { text: text });
         if (response.ok) {
             const data = await response.json();
-            return data.language;
+            return data.iso;
         }
+        return null
     }
 
     private async* streamResponse(response: Response): AsyncGenerator<string, void, unknown> {
@@ -127,7 +128,7 @@ export class TranslateAPI {
                 return data.text || data.translation || '';
             }
         } catch (e) {
-            console.log('Error translating: ', e.message)
+            console.warn('Error translating: ', e.message)
         }
     }
 }

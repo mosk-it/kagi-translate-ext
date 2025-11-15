@@ -1,8 +1,10 @@
-import  ALL_LANGUAGES  from './shared/languages.json';
+import  ALL_LANGUAGES   from './shared/languages.json';
+import { SETTINGS_KEY } from './shared/settings';
+import { resetSettings } from "./shared/settings";
 
 var browser = require("webextension-polyfill");
-import { SettingsLoader, SettingsInterface, DEFAULT_SETTINGS, LanguageInterface } from './shared/settings'
-
+import { SettingsLoader, SettingsInterface, DEFAULT_SETTINGS } from './shared/settings'
+import { LanguageInterface } from './shared/languages'
 
 class OptionsPage {
 
@@ -13,12 +15,12 @@ class OptionsPage {
   protected showAllLangsButton: HTMLButtonElement;
   protected autoTranslateCheckbox: HTMLInputElement;
   protected openMinimalPopupCheckbox: HTMLInputElement;
-  protected advancedOpen;
+
+  protected advancedOpen: boolean;
 
   private readonly  allLanguages: LanguageInterface[] = ALL_LANGUAGES;
 
-  private settings: SettingsInterface;
-  private settingsManager
+  private settingsManager: SettingsManager;
 
 
   constructor() {
@@ -30,11 +32,10 @@ class OptionsPage {
     this.saveButton = document.getElementById('saveSettings') as HTMLButtonElement;
     this.statusDiv = document.getElementById('status') as HTMLDivElement;
     this.showAllLangsButton = document.getElementById('showAllLangs') as HTMLButtonElement;
-    // this.autoTranslateCheckbox = document.getElementById('autoTranslateOnPopup') as HTMLInputElement; // get checkbox
+    this.autoTranslateCheckbox = document.getElementById('autoTranslateOnPopup') as HTMLInputElement; // get checkbox
     // this.openMinimalPopupCheckbox = document.getElementById('openMinimalPopup') as HTMLInputElement;
 
     this.initializeEventListeners();
-    this.renderLanguagesCheckboxes();
     this.autoDetectionSelectFillLangs();
     this.loadSettingsIntoUI();
   }
@@ -64,17 +65,17 @@ class OptionsPage {
 
     this.showAllLangsButton.addEventListener('click', this.showAllLangs.bind(this));
 
-
     this.saveButton.addEventListener('click', this.saveSettingsFromUI.bind(this));
 
   }
 
   private async loadSettingsIntoUI(): Promise<void> {
     try {
-      const settings = await this.settingsManager.loadSettings();
+      await this.renderLanguagesCheckboxes();
+      const settings = this.settingsManager.getSettings();
       this.setChecked('autoTranslateOnPopup', settings.autoTranslateOnPopup);
       this.setChecked('bubbleIcon', settings.bubbleIcon);
-      this.setChecked('autoDetectLanguage', settings.autoDetectLanguage);
+      // this.setChecked('autoDetectLanguageInPopup', settings.autoDetectLanguageInPopup);
 
       const selectionActionElement = document.querySelector(`input[name="selectionAction"][value="${settings.selectionAction}"]`) as HTMLInputElement;
       if (selectionActionElement) {
@@ -82,49 +83,50 @@ class OptionsPage {
       }
 
       for (let selectedLang of settings.selectedLanguages) {
-        this.setChecked(this.langToId(selectedLang), true);
+        this.setChecked(this.langToId(selectedLang.iso), true);
       }
 
       this.setValueToElement('autoDetectLangTo', settings.autoDetectLangTo || '');
       this.setValueToElement('autoDetectLangToAlt', settings.autoDetectLangToAlt || '');
-      this.setValueToElement('customCSS', settings.customCSS);
 
       this.setValueToElement('customCSS', settings.customCSS);
 
     } catch (error) {
-      console.error('Failed to load settings into UI:', error);
+      console.warn('Failed to load settings into UI:', error);
       this.showStatusMessage('Failed to load settings', 'error');
     }
   }
 
   private async saveSettingsFromUI(): Promise<void> {
     try {
-      const settings = await this.settingsManager.loadSettings();
+      const settings = await this.settingsManager.getSettings();
 
       settings.autoTranslateOnPopup = this.getChecked('autoTranslateOnPopup');
       settings.bubbleIcon = this.getChecked('bubbleIcon');
-      settings.autoDetectLanguage = this.getChecked('autoDetectLanguage');
+      settings.autoDetectLanguageInPopup = this.getChecked('autoDetectLanguageInPopup');
 
       const checkedLanguages = this.languageGrid.querySelectorAll('input[type="checkbox"]:checked');
 
-      let selLangs: string[] = []
+      let selLangs: LanguageInterface[] = []
       checkedLanguages.forEach(checkbox => {
-        const langCode = checkbox.getAttribute('data-lang');
-        if (langCode) {
-          selLangs.push(langCode);
+        const langName = checkbox.getAttribute('data-lang');
+        const langIso = checkbox.getAttribute('data-iso');
+        if (langIso && langName) {
+          selLangs.push( { lang: langName, iso: langIso});
         }
       });
       settings.selectedLanguages = selLangs;
 
-      settings.selectionAction = (document.querySelector('input[name="selectionAction"]:checked') as HTMLInputElement)?.value  || '';
+      settings.selectionAction = (document.querySelector('input[name="selectionAction"]:checked') as HTMLInputElement)?.value as "" | "bubbleIcon" | "selectPopup" || '';
 
       settings.autoDetectLangTo = this.getValueFromElement('autoDetectLangTo');
       settings.autoDetectLangToAlt = this.getValueFromElement('autoDetectLangToAlt');
       settings.customCSS = this.getValueFromElement('customCSS');
 
       this.settingsManager.updateSettings(settings);
-      this.settingsManager.save().then(
-        this.showStatusMessage('Settings saved successfully!', 'success')
+      this.settingsManager.save().then(() => {
+          this.showStatusMessage('Settings saved successfully!', 'success')
+        }
       );
 
     } catch (error) {
@@ -154,37 +156,42 @@ class OptionsPage {
     }
   }
 
-  private renderLanguagesCheckboxes(): void {
+  private async renderLanguagesCheckboxes(): Promise<void> {
+    await this.settingsManager.ensureSettingsLoaded();
     this.languageGrid.innerHTML = '';
+    let selectedIsoCodes = this.settingsManager.getSettings().selectedLanguages.map(language => language.iso);
+    const languageDiv = this.createLanguageCheckbox({lang: "Automatic", iso:"auto"}, true);
+    this.languageGrid.appendChild(languageDiv);
     this.allLanguages.forEach(ob => {
       //ob.m defines if lang is by default hidden
-      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.m);
+      const languageDiv = this.createLanguageCheckbox(ob, ob.m || selectedIsoCodes.includes(ob.iso));
       this.languageGrid.appendChild(languageDiv);
     });
   }
 
   private langToId(lang: string): string {
-      return 'lang-' + lang.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-');
+    return 'lang-' + lang.toLowerCase().replace(/[^a-zA-Z0-9]/g, '-');
   }
 
-  private createLanguageCheckbox(lang: string, isVisible: boolean = false): HTMLDivElement {
+  private createLanguageCheckbox(lang: LanguageInterface, isVisible: boolean = false): HTMLDivElement {
     const languageDiv = document.createElement('div');
     languageDiv.classList.add('language-checkbox');
 
-    let langId = this.langToId(lang);
+    let langId = this.langToId(lang.iso);
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = langId;
-    checkbox.value = lang;
-    checkbox.setAttribute('data-lang', lang);
+    checkbox.value = lang.iso;
+    checkbox.setAttribute('data-iso', lang.iso);
+    checkbox.setAttribute('data-lang', lang.lang);
 
     const label = document.createElement('label');
     label.htmlFor = langId;
     if (!isVisible) {
         languageDiv.style.display = 'none';
     }
-    label.textContent = lang;
+    label.textContent = lang.lang;
 
     languageDiv.appendChild(checkbox);
     languageDiv.appendChild(label);
@@ -237,12 +244,7 @@ class OptionsPage {
       .map((checkbox) => (checkbox as HTMLInputElement).value);
   }
 
-
   private autoDetectionSelectFillLangs() {
-    this.allLanguages.forEach((ob) => {
-      const languageDiv = this.createLanguageCheckbox(ob.lang, ob.m);
-      this.languageGrid.appendChild(languageDiv);
-    });
     this.populateLanguageToSelect("autoDetectLangTo", [...this.allLanguages]);
     this.populateLanguageToSelect("autoDetectLangToAlt", [ ...this.allLanguages, ]);
   }
@@ -270,20 +272,26 @@ class OptionsPage {
 
 }
 
-
-
 class SettingsManager extends SettingsLoader {
 
+  private settingsLoaded: Promise<SettingsInterface> | null = null;
+
   constructor() {
-    super()
+    super();
+
+    this.settingsLoaded = this.loadSettings();
   }
 
-
+  public async ensureSettingsLoaded(): Promise<void> {
+    if (this.settingsLoaded) {
+      await this.settingsLoaded;
+    }
+  }
 
   public async save(): Promise<void> {
     try {
       const settingsObj = {
-        [SettingsManager.SETTINGS_KEY]: this.settings
+        [SETTINGS_KEY]: this.settings
       };
       await browser.storage.local.set(settingsObj);
     } catch (error) {
@@ -291,8 +299,9 @@ class SettingsManager extends SettingsLoader {
     }
   }
 
+
   public getSettings(): SettingsInterface {
-    return this.settings;
+      return this.settings;
   }
 
   public updateSettings(newSettings: Partial<SettingsInterface>): void {
@@ -300,7 +309,8 @@ class SettingsManager extends SettingsLoader {
   }
 
   public resetToDefaults(): void {
-    this.settings = { ...DEFAULT_SETTINGS };
+    resetSettings()
+    this.loadSettings()
   }
 
 }
