@@ -3,14 +3,9 @@
 <head>
   <title>Kagi Translate</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="stylesheet" href="shared-styles.css">
+  <link rel="stylesheet" href="styles.css">
   <style>
-    :root {
-      --msg-bg-color: #ffff00;
-      --bg-color: #ffffff;
-      --text-color: #333333;
-      --accent-color: #4a90e2;
-      --border-color: #e0e0e0;
-    }
 
     body {
       width: 320px;
@@ -30,8 +25,7 @@
     }
 
     textarea {
-      width: 95%;
-      min-height: 100px;
+      min-height: 140px;
       border: 1px solid var(--border-color);
       border-radius: 3px;
       padding: 8px;
@@ -56,7 +50,7 @@
     }
 
     .options-link {
-        color: #4a90e2;
+        color: var(--accent-color);
         margin-left: auto;
     }
 
@@ -98,10 +92,10 @@
       <div id="message-box"></div>
     <small class="options-link"><a href="options.html" target="_blank">options</a></small>
     <textarea class="textarea" id="translateText" placeholder="Enter text to translate"></textarea>
-    <div class="lang-select select-items">
-      <select id="fromLang" class="select-selected"> </select>
-      <button id="reverseLangsButton" class="button"><></button>
-      <select id="toLang" class="select-selected"> </select>
+    <div class="kte lang-select select-items">
+      <select id="fromLang" class="kte select-selected"> </select>
+      <button id="reverseLangsButton" class="kte button"><></button>
+      <select id="toLang" class="kte select-selected"> </select>
     </div>
     <button id="translateButton" class="button">Translate</button>
     <div class="textarea" id="result"></div>

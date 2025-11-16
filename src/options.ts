@@ -67,6 +67,18 @@ class OptionsPage {
 
     this.saveButton.addEventListener('click', this.saveSettingsFromUI.bind(this));
 
+
+    for (let el of document.querySelectorAll('.theme-radio')) {
+      el.addEventListener('click', async(e) => {
+        if (e.target) {
+          document.documentElement.classList.remove('auto', 'dark', 'light');
+          document.documentElement.classList.add(e.target.value);
+        }
+      });
+    }
+
+
+
   }
 
   private async loadSettingsIntoUI(): Promise<void> {
@@ -82,6 +94,12 @@ class OptionsPage {
         selectionActionElement.checked = true;
       }
 
+
+      const themeElement = document.querySelector(`input[name="theme"][value="${settings.theme}"]`) as HTMLInputElement;
+      if (themeElement) {
+        themeElement.checked = true;
+      }
+
       for (let selectedLang of settings.selectedLanguages) {
         this.setChecked(this.langToId(selectedLang.iso), true);
       }
@@ -90,6 +108,11 @@ class OptionsPage {
       this.setValueToElement('autoDetectLangToAlt', settings.autoDetectLangToAlt || '');
 
       this.setValueToElement('customCSS', settings.customCSS);
+
+
+        console.log(document.documentElement.className)
+        console.log(settings.theme)
+        document.documentElement.className = settings.theme;
 
     } catch (error) {
       console.warn('Failed to load settings into UI:', error);
@@ -118,6 +141,9 @@ class OptionsPage {
       settings.selectedLanguages = selLangs;
 
       settings.selectionAction = (document.querySelector('input[name="selectionAction"]:checked') as HTMLInputElement)?.value as "" | "bubbleIcon" | "selectPopup" || '';
+
+
+      settings.theme = (document.querySelector('input[name="theme"]:checked') as HTMLInputElement)?.value as "auto" | "dark" | "light" || '';
 
       settings.autoDetectLangTo = this.getValueFromElement('autoDetectLangTo');
       settings.autoDetectLangToAlt = this.getValueFromElement('autoDetectLangToAlt');

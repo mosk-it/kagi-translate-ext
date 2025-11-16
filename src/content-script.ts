@@ -1,6 +1,7 @@
 import { SettingsLoader } from "./shared/settings";
 import browser from "webextension-polyfill";
 
+let themeApplied = false;
 let selectionTimeout: number | null = null;
 let currentIcon: HTMLElement | null = null;
 let currentPopup: HTMLElement | null = null;
@@ -16,21 +17,51 @@ async function initializeWithSettings() {
   const settings = await sl.loadSettings();
 
   cleanupEventListeners();
+  injectScopedStyles(settings.theme);
 
   if (!settings.selectionAction) {
     return "";
   } else if (settings.selectionAction === "bubbleIcon") {
     boundBubbleHandler = (e: MouseEvent) =>
-      handleSelectionWithIconBubble(e, settings.customCSS);
+      handleSelectionWithIconBubble(e, settings);
     document.addEventListener("mouseup", boundBubbleHandler);
   } else if (settings.selectionAction === "selectPopup") {
     boundSelectHandler = (e: MouseEvent) =>
-      handleSelectionWithSelectPopup(e, settings.customCSS);
+      handleSelectionWithSelectPopup(e, settings);
     document.addEventListener("mouseup", boundSelectHandler);
   }
 }
 
-function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
+function injectScopedStyles(theme: string) {
+  if (document.getElementById('extension-popup-styles')) return;
+
+  const link = document.createElement('link');
+  link.id = 'extension-popup-styles';
+  link.rel = 'stylesheet';
+  link.href = browser.runtime.getURL('shared-styles.css');
+
+  document.head.appendChild(link);
+}
+
+
+
+function getSelectPopupContainerClassName(theme) {
+  console.log(theme);
+  console.log(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  if (theme == "auto") {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return "dark";
+    } else {
+      return 'light';
+    }
+  } else {
+    return theme;
+  }
+}
+
+
+function handleSelectionWithIconBubble(e: MouseEvent, settings) {
   if (selectionTimeout) {
     clearTimeout(selectionTimeout);
   }
@@ -46,7 +77,10 @@ function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
       icon.style.left = `${e.clientX}px`;
       icon.style.top = `${e.clientY}px`;
       icon.innerHTML = "💬";
-      icon.className = "bubble-icon-translate";
+      icon.className = "";
+      icon.classList.add('bubble-icon-translate')
+      icon.classList.add('kte')
+
 
       const autoRemoveTimeout = setTimeout(() => {
         if (currentIcon) {
@@ -74,12 +108,13 @@ function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
           idx,
         );
 
-        if (customCSS) {
+        if (settings.customCSS) {
           const styleElement = document.createElement("style");
-          styleElement.textContent = customCSS;
+          styleElement.textContent = settings.customCSS;
           styleElement.id = `custom-css-${Date.now()}`;
           popup.appendChild(styleElement);
         }
+        popup.classList.add(getSelectPopupContainerClassName(settings.theme));
 
         document.body.appendChild(popup);
         currentPopup = popup;
@@ -127,7 +162,7 @@ function handleSelectionWithIconBubble(e: MouseEvent, customCSS: string) {
   }, 300) as unknown as number;
 }
 
-function handleSelectionWithSelectPopup(e: MouseEvent, customCSS: string) {
+function handleSelectionWithSelectPopup(e: MouseEvent, settings) {
   if (selectionTimeout) {
     clearTimeout(selectionTimeout);
   }
@@ -145,10 +180,11 @@ function handleSelectionWithSelectPopup(e: MouseEvent, customCSS: string) {
         e.clientX + 10,
         idx,
       );
+        popup.classList.add(getSelectPopupContainerClassName(settings.theme));
 
-      if (customCSS) {
+      if (settings.customCSS) {
         const styleElement = document.createElement("style");
-        styleElement.textContent = customCSS;
+        styleElement.textContent = settings.customCSS;
         styleElement.id = `custom-css-${Date.now()}`;
         popup.appendChild(styleElement);
       }
@@ -186,10 +222,13 @@ function createSelectPopupContainer(
   idx: string | null = null,
 ): HTMLDivElement {
   const popup = document.createElement("div");
-  popup.className = "select-popup-container";
+  popup.className = "";
+  popup.classList.add('select-popup-container');
+  popup.classList.add('kte');
+
   popup.innerHTML = `
-    <div class="select-popup-content">
-      <p class="translation-text" id="${idx}" style=""></p>
+    <div class="kte select-popup-content">
+      <p class="kte translation-text" id="${idx}" style=""></p>
     </div>
   `;
 

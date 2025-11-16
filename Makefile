@@ -19,6 +19,7 @@ firefox_esm: clean_firefox
 	cp images/icon.png $(DIST_FIREFOX)
 	npm install
 
+	cp ./src/shared-styles.css $(DIST_FIREFOX)
 	cp ./src/styles.css $(DIST_FIREFOX)
 	./node_modules/.bin/esbuild src/content-script.ts \
 		--bundle \
@@ -48,6 +49,7 @@ chrome_esm: clean_chrome
 	npm install
 	cp ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js $(DIST_CHROME)
 
+	cp ./src/shared-styles.css $(DIST_CHROME)
 	cp ./src/styles.css $(DIST_CHROME)
 	./node_modules/.bin/esbuild src/content-script.ts \
 		--bundle \

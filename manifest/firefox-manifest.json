@@ -28,7 +28,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content-script.js"],
-      "css": ["styles.css"],
+      "css": ["shared-styles.css", "styles.css"],
       "run_at": "document_end"
     }
   ],

@@ -172,7 +172,21 @@ class TranslatePopup extends TranslateAPI {
     this.translateButton.addEventListener('click', async () => {
       await this.translateTextToOtherLanguage();
     });
+
+
+
   }
+
+
+  public refreshTheme(theme: string | null = null) {
+    let pickTheme = theme;
+    if (!pickTheme) {
+      pickTheme = this.settings.theme
+    }
+    document.documentElement.classList.remove('auto', 'dark', 'light');
+    document.documentElement.classList.add(pickTheme);
+  }
+
 
   private reverseLanguages(): void {
     const tmp = this.fromLangEl.value;
@@ -215,4 +229,5 @@ class TranslatePopup extends TranslateAPI {
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new TranslatePopup();
   await app.initialize();
+  await app.refreshTheme();
 });

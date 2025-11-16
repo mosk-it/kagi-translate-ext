@@ -1,0 +1,82 @@
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #cccccc;
+  --accent-color: #C44B00;
+  --popup-bg: #fff;
+  --popup-border: #ccc;
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+  :root.auto {
+
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --border-color: #555555;
+  --accent-color: #C44B00;
+    --popup-bg: #2d2d2d;
+    --popup-border: #444444;
+  }
+}
+
+.dark {
+  --bg-color: #1a1a1a;
+  --text-color: #ffffff;
+  --border-color: #555555;
+  --accent-color: #C44B00;
+  --popup-bg: #2d2d2d;
+  --popup-border: #444444;
+}
+
+.light {
+  --popup-bg: #ffffff;
+  --popup-border: #cccccc;
+  --text-color: #333333;
+}
+
+
+.kte.text-popup-window:hover {
+    opacity: 0.2;
+}
+
+.kte.translation-text:empty::before {
+	content: "...";
+}
+.kte.translation-text:not(:empty)::before {
+	content: "";
+}
+
+.kte.bubble-icon-translate {
+  position: fixed;
+  z-index: 10000;
+  cursor: pointer;
+  font-size: 16px;
+  background: var(--popup-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 3px;
+  padding: 2px;
+  opacity: 0.5;
+}
+
+.select-popup-container {
+  position: absolute;
+  z-index: 10001;
+  background: var(--popup-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 4px;
+  color: var(--text-color);
+}
+
+.kte.select-popup-content {
+  padding: 6px;
+  font-family: sans-serif;
+  font-size: 12px;
+  max-width: 240px;
+}
+
+.select-popup-content p {
+  margin: 4px 0;
+  color: var(--text-color);
+}

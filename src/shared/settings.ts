@@ -12,6 +12,8 @@ export interface SettingsInterface {
   autoDetectLangTo: string;
   autoDetectLangToAlt: string;
 
+  theme: "auto" | "dark" | "light",
+
   customCSS: string;
 }
 
@@ -26,9 +28,19 @@ export const DEFAULT_SETTINGS: SettingsInterface = {
   autoDetectLanguageInPopup: true,
   autoDetectLangTo: navigator.language,
   autoDetectLangToAlt: 'en',
+  theme: 'auto',// | '' | '',
+  customCSS: `.select-popup-container { background: var(--popup-bg); border: 1px solid var(--popup-border); border-radius: 4px; }
+.select-popup-content {padding: 6px; font-family: sans-serif; font-size: 12px; max-width: 240px; color: var(--text-color);}
+.select-popup-content p {margin-top: 4px; margin-bottom: 4px;}`
+
+
+/*
   customCSS: `.select-popup-container { background: #fff; border: 1px solid #ccc; border-radius: 4px; }
 .select-popup-content {padding: 6px; font-family: sans-serif; font-size: 12px; max-width: 240px;}
 .select-popup-content p {margin-top: 4px; margin-bottom: 4px;}`,
+ * */
+
+
 };
 
 export function resetSettings() {
